@@ -1,5 +1,6 @@
 require 'java'
 require 'memcached/version'
+require 'memcached/exceptions'
 require 'target/spymemcached-ext-0.0.1.jar'
 
 class Memcached
@@ -41,6 +42,9 @@ class Memcached
 
   def get(key, marshal=true)
     ret = @client.get(key, @simple_transcoder)
+    if ret.nil?
+      raise Memcached::NotFound
+    end
     flags, data = ret.flags, ret.data
     value = String.from_java_bytes data
     marshal ? Marshal.load(value) : value

@@ -22,13 +22,20 @@ describe Memcached do
     end
 
     it "should set/get with plain text" do
-      @memcached.set("hello", "world")
-      @memcached.get("hello").should == "world"
+      @memcached.set "key", "value"
+      @memcached.get("key").should == "value"
     end
 
     it "should set/get with compressed text" do
-      @memcached.set("hello", "x\234c?P?*?/?I\001\000\b8\002a")
-      @memcached.get("hello").should == "x\234c?P?*?/?I\001\000\b8\002a"
+      @memcached.set "key", "x\234c?P?*?/?I\001\000\b8\002a"
+      @memcached.get("key").should == "x\234c?P?*?/?I\001\000\b8\002a"
+    end
+
+    it "should set expiry" do
+      @memcached.set "key", "value", 1
+      @memcached.get("key").should == "value"
+      sleep 1
+      lambda { @memcached.get("key") }.should raise_error(Memcached::NotFound)
     end
   end
 end
