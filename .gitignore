@@ -16,3 +16,9 @@ tmp
 .yardoc
 _yardoc
 doc/
+
+target/classes
+target/maven-archiver
+target/surefire
+target/dependency-reduced-pom.xml
+target/original-spymemcached-ext-0.0.1.jar
