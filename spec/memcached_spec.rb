@@ -21,9 +21,14 @@ describe Memcached do
       @memcached.servers.should == ["127.0.0.1:11211"]
     end
 
-    it "should set/get" do
+    it "should set/get with plain text" do
       @memcached.set("hello", "world")
       @memcached.get("hello").should == "world"
+    end
+
+    it "should set/get with compressed text" do
+      @memcached.set("hello", "x\234c?P?*?/?I\001\000\b8\002a")
+      @memcached.get("hello").should == "x\234c?P?*?/?I\001\000\b8\002a"
     end
   end
 end
