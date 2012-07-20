@@ -4,3 +4,7 @@ require 'rspec'
 require 'rspec/autorun'
 
 require 'memcached'
+
+RSpec.configure do |config|
+  config.mock_framework = :mocha
+end

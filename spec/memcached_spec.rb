@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Memcached do
   context "stub memcached" do
-    before { Java::NetSpyMemcached::MemcachedClient.should_receive(:new) }
+    before { Java::NetSpyMemcached::MemcachedClient.expects(:new) }
     subject { Memcached.new(["10.0.0.1:11211", "10.0.0.2:11211"], :default_ttl => 100) }
     its(:servers) { should == ["10.0.0.1:11211", "10.0.0.2:11211"] }
     its(:default_ttl) { should == 100 }
@@ -36,6 +36,12 @@ describe Memcached do
       @memcached.get("key").should == "value"
       sleep 1
       lambda { @memcached.get("key") }.should raise_error(Memcached::NotFound)
+    end
+
+    it "should retry when set failure" do
+      Java::NetSpyMemcached::MemcachedClient.any_instance.stubs(:set).raises(Memcached::NotStored)
+      Java::ComOpenfeintMemcachedTranscoders::SimpleTranscoder.any_instance.expects(:setFlags).times(6)
+      lambda { @memcached.set "key", "value" }.should raise_error(Memcached::NotStored)
     end
   end
 end
