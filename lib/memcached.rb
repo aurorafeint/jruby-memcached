@@ -22,7 +22,7 @@ class Memcached
     # MemcachedClient has no interface to set connFactory, has to do manually
     @client.instance_variable_set :@connFactory, builder
 
-    @default_ttl = options[:default_ttl] || 7 * 3600 # 7 days
+    @default_ttl = options[:default_ttl] || 604800 # 7 days
   end
 
   def set(key, value, ttl=@default_ttl, marshal=true)
