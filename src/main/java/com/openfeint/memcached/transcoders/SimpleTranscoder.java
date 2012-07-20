@@ -3,6 +3,8 @@ package com.openfeint.memcached.transcoders;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.transcoders.Transcoder;
 
+import com.openfeint.memcached.ReturnData;
+
 /**
  *
  * SimpleTranscoder didn't do any serializing/deserializing or compression/decompression.
@@ -11,7 +13,7 @@ import net.spy.memcached.transcoders.Transcoder;
  */
 public class SimpleTranscoder implements Transcoder<Object> {
     private final int maxSize;
-    private final int flags;
+    private int flags;
 
     public SimpleTranscoder() {
         this(CachedData.MAX_SIZE, 0);
@@ -38,7 +40,7 @@ public class SimpleTranscoder implements Transcoder<Object> {
     public Object decode(CachedData d) {
         byte[] data = d.getData();
         int flags = d.getFlags();
-        return data;
+        return new ReturnData(flags, data);
     }
 
     public int getMaxSize() {
@@ -47,5 +49,9 @@ public class SimpleTranscoder implements Transcoder<Object> {
 
     public int getFlags() {
         return flags;
+    }
+
+    public void setFlags(int flags) {
+        this.flags = flags;
     }
 }
