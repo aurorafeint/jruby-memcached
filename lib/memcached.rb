@@ -42,17 +42,6 @@ class Memcached
     @simple_transcoder = SimpleTranscoder.new
   end
 
-  def with_retry
-    begin
-      yield
-    rescue
-      tries ||= 0
-      raise unless tries < options[:exception_retry_limit]
-      tries += 1
-      retry
-    end
-  end
-
   def set(key, value, ttl=@default_ttl, marshal=true, flags=FLAGS)
     with_retry do
       value = encode(value, marshal, flags)
@@ -63,7 +52,7 @@ class Memcached
 
   def delete(key)
     with_retry do
-      @client.delete(key)
+      raise Memcached::NotFound if @client.delete(key).get === false
     end
   end
 
@@ -86,6 +75,17 @@ class Memcached
   end
 
   private
+  def with_retry
+    begin
+      yield
+    rescue
+      tries ||= 0
+      raise unless tries < options[:exception_retry_limit]
+      tries += 1
+      retry
+    end
+  end
+
   def encode(value, marshal, flags)
     marshal ? Marshal.dump(value) : value
   end
