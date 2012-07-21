@@ -50,6 +50,16 @@ class Memcached
     end
   end
 
+  def add(key, value, ttl=@default_ttl, marshal=true, flags=FLAGS)
+    with_retry do
+      value = encode(value, marshal, flags)
+      @simple_transcoder.setFlags(flags)
+      if @client.add(key, ttl, value.to_java_bytes, @simple_transcoder).get === false
+        raise Memcached::NotStored
+      end
+    end
+  end
+
   def delete(key)
     with_retry do
       raise Memcached::NotFound if @client.delete(key).get === false

@@ -60,6 +60,27 @@ describe Memcached do
       end
     end
 
+    context "add" do
+      it "should add new key" do
+        @memcached.delete "key" rescue nil
+        @memcached.add "key", "value"
+        @memcached.get("key").should == "value"
+      end
+
+      it "should not add existing key" do
+        @memcached.set "key", "value"
+        lambda { @memcached.add "key", "value" }.should raise_error(Memcached::NotStored)
+      end
+
+      it "should add expiry" do
+        @memcached.delete "key" rescue nil
+        @memcached.add "key", "value", 1
+        @memcached.get "key"
+        sleep 1
+        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+      end
+    end
+
     context "delete" do
       it "should delete" do
         @memcached.set "key", "value"
