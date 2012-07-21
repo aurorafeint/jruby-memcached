@@ -28,7 +28,6 @@ class Memcached
       InetSocketAddress.new host, port.to_i
     end
     builder = ConnectionFactoryBuilder.new.
-                                       setFailureMode(FailureMode::Cancel).
                                        setLocatorType(Locator::CONSISTENT).
                                        setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
     # jruby is not smart enough to use MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs)
