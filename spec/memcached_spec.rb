@@ -81,6 +81,20 @@ describe Memcached do
       end
     end
 
+    context "replace" do
+      it "should replace existing key" do
+        @memcached.set "key", nil
+        @memcached.replace "key", "value"
+        @memcached.get("key").should == "value"
+      end
+
+      it "should not replace with new key" do
+        @memcached.delete "key" rescue nil
+        lambda { @memcached.replace "key", "value" }.should raise_error(Memcached::NotStored)
+        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+      end
+    end
+
     context "delete" do
       it "should delete" do
         @memcached.set "key", "value"
