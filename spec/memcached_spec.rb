@@ -31,6 +31,16 @@ describe Memcached do
       @memcached.get("key").should == "x\234c?P?*?/?I\001\000\b8\002a"
     end
 
+    it "should get nil" do
+      @memcached.set "key", nil, 0
+      @memcached.get("key").should be_nil
+    end
+
+    it "should get missing" do
+      @memcached.delete "key" rescue nil
+      lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+    end
+
     it "should set expiry" do
       @memcached.set "key", "value", 1
       @memcached.get("key").should == "value"

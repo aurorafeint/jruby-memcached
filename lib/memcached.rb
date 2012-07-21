@@ -61,6 +61,12 @@ class Memcached
     end
   end
 
+  def delete(key)
+    with_retry do
+      @client.delete(key)
+    end
+  end
+
   def get(key, marshal=true)
     with_retry do
       ret = @client.get(key, @simple_transcoder)
