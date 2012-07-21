@@ -55,7 +55,7 @@ class Memcached
 
   def set(key, value, ttl=@default_ttl, marshal=true, flags=FLAGS)
     with_retry do
-      value = marshal ? Marshal.dump(value) : value
+      value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
       @client.set(key, ttl, value.to_java_bytes, @simple_transcoder)
     end
@@ -67,7 +67,7 @@ class Memcached
       raise Memcached::NotFound if ret.nil?
       flags, data = ret.flags, ret.data
       value = String.from_java_bytes data
-      marshal ? Marshal.load(value) : value
+      value = decode(value, marshal, flags)
     end
   end
 
@@ -77,5 +77,14 @@ class Memcached
 
   def close
     @client.shutdown
+  end
+
+  private
+  def encode(value, marshal, flags)
+    marshal ? Marshal.dump(value) : value
+  end
+
+  def decode(value, marshal, flags)
+    marshal ? Marshal.load(value) : value
   end
 end
