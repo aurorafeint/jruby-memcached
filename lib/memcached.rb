@@ -30,10 +30,7 @@ class Memcached
     builder = ConnectionFactoryBuilder.new.
                                        setLocatorType(Locator::CONSISTENT).
                                        setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
-    # jruby is not smart enough to use MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs)
-    @client = MemcachedClient.new @servers
-    # MemcachedClient has no interface to set connFactory, has to do manually
-    @client.instance_variable_set :@connFactory, builder
+    @client = MemcachedClient.new builder.build, @servers
 
     @default_ttl = @options[:default_ttl]
     @flags = @options[:flags]
