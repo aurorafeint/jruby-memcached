@@ -22,7 +22,10 @@ class Memcached
   def initialize(addresses, options={})
     builder = XMemcachedClientBuilder.new AddrUtil.getAddresses(Array(addresses).join(' '))
     builder.setSessionLocator(KetamaMemcachedSessionLocator.new(HashAlgorithm::FNV1_32_HASH))
+    builder.configuration.setStatisticsServer(false)
     @client = builder.build
+    @client.setMergeFactor(50)
+    @client.setEnableHeartBeat(false)
 
     @options = DEFAULTS.merge(options)
 
