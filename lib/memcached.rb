@@ -1,15 +1,14 @@
 require 'java'
 require 'memcached/version'
 require 'memcached/exceptions'
-require File.join(File.dirname(__FILE__), '../target/spymemcached-ext-0.0.1.jar')
+require File.join(File.dirname(__FILE__), '../target/xmemcached-ext-0.0.1.jar')
 
 class Memcached
-  include_class 'java.net.InetSocketAddress'
-  include_class 'net.spy.memcached.MemcachedClient'
-  include_class 'net.spy.memcached.ConnectionFactoryBuilder'
-  include_class 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
-  include_class 'net.spy.memcached.DefaultHashAlgorithm'
-  include_class 'net.spy.memcached.FailureMode'
+  include_class 'net.rubyeye.xmemcached.XMemcachedClientBuilder'
+  include_class 'net.rubyeye.xmemcached.utils.AddrUtil'
+  include_class 'net.rubyeye.xmemcached.impl.LibmemcachedMemcachedSessionLocator'
+  include_class 'net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator'
+  include_class 'net.rubyeye.xmemcached.HashAlgorithm'
   include_class 'com.openfeint.memcached.transcoders.SimpleTranscoder'
 
   FLAGS = 0x0
@@ -22,15 +21,11 @@ class Memcached
   attr_reader :default_ttl
 
   def initialize(addresses, options={})
+    builder = XMemcachedClientBuilder.new AddrUtil.getAddresses(Array(addresses).join(' '))
+    builder.setSessionLocator(LibmemcachedMemcachedSessionLocator.new(100, HashAlgorithm::FNV1_32_HASH))
+    @client = builder.build
+
     @options = DEFAULTS.merge(options)
-    @servers = Array(addresses).map do |address|
-      host, port = address.split(":")
-      InetSocketAddress.new host, port.to_i
-    end
-    builder = ConnectionFactoryBuilder.new.
-                                       setLocatorType(Locator::CONSISTENT).
-                                       setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
-    @client = MemcachedClient.new builder.build, @servers
 
     @default_ttl = @options[:default_ttl]
     @flags = @options[:flags]
@@ -50,7 +45,7 @@ class Memcached
     with_retry do
       value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
-      if @client.add(key, ttl, value.to_java_bytes, @simple_transcoder).get === false
+      if @client.add(key, ttl, value.to_java_bytes, @simple_transcoder) === false
         raise Memcached::NotStored
       end
     end
@@ -60,7 +55,7 @@ class Memcached
     with_retry do
       value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
-      if @client.replace(key, ttl, value.to_java_bytes, @simple_transcoder).get === false
+      if @client.replace(key, ttl, value.to_java_bytes, @simple_transcoder) === false
         raise Memcached::NotStored
       end
     end
@@ -68,7 +63,7 @@ class Memcached
 
   def delete(key)
     with_retry do
-      raise Memcached::NotFound if @client.delete(key).get === false
+      raise Memcached::NotFound if @client.delete(key) === false
     end
   end
 
@@ -80,10 +75,6 @@ class Memcached
       value = String.from_java_bytes data
       value = decode(value, marshal, flags)
     end
-  end
-
-  def servers
-    @servers.map { |server| server.to_s[1..-1] }
   end
 
   def close

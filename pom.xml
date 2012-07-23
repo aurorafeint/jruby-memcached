@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.openfeint</groupId>
-  <artifactId>spymemcached-ext</artifactId>
+  <artifactId>xmemcached-ext</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
 
@@ -16,8 +16,8 @@
 
   <repositories>
     <repository>
-      <id>spymemcached</id>
-      <name>spymemcached extention</name>
+      <id>xmemcached</id>
+      <name>xmemcached extention</name>
       <layout>default</layout>
       <url>http://files.couchbase.com/maven2/</url>
       <snapshots>
@@ -28,21 +28,30 @@
 
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jruby</groupId>
       <artifactId>jruby</artifactId>
       <version>1.6.7.2</version>
     </dependency>
     <dependency>
-      <groupId>spy</groupId>
-      <artifactId>spymemcached</artifactId>
-      <version>2.8.1</version>
+      <groupId>com.googlecode.xmemcached</groupId>
+      <artifactId>xmemcached</artifactId>
+      <version>1.3.8</version>
     </dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.5.6</version>
+		</dependency>
   </dependencies>
 
   <build>
