@@ -6,9 +6,8 @@ require File.join(File.dirname(__FILE__), '../target/xmemcached-ext-0.0.1.jar')
 class Memcached
   include_class 'net.rubyeye.xmemcached.XMemcachedClientBuilder'
   include_class 'net.rubyeye.xmemcached.utils.AddrUtil'
-  include_class 'net.rubyeye.xmemcached.impl.LibmemcachedMemcachedSessionLocator'
-  include_class 'net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator'
   include_class 'net.rubyeye.xmemcached.HashAlgorithm'
+  include_class 'com.openfeint.memcached.impl.KetamaMemcachedSessionLocator'
   include_class 'com.openfeint.memcached.transcoders.SimpleTranscoder'
 
   FLAGS = 0x0
@@ -22,7 +21,7 @@ class Memcached
 
   def initialize(addresses, options={})
     builder = XMemcachedClientBuilder.new AddrUtil.getAddresses(Array(addresses).join(' '))
-    builder.setSessionLocator(LibmemcachedMemcachedSessionLocator.new(100, HashAlgorithm::FNV1_32_HASH))
+    builder.setSessionLocator(KetamaMemcachedSessionLocator.new(HashAlgorithm::FNV1_32_HASH))
     @client = builder.build
 
     @options = DEFAULTS.merge(options)
@@ -31,6 +30,10 @@ class Memcached
     @flags = @options[:flags]
 
     @simple_transcoder = SimpleTranscoder.new
+  end
+
+  def servers
+    @client.available_servers.map { |server| server.to_s.split("/").last }
   end
 
   def set(key, value, ttl=@default_ttl, marshal=true, flags=FLAGS)
