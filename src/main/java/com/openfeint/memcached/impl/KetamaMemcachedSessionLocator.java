@@ -1,15 +1,4 @@
-/**
- *Copyright [2009-2010] [dennis zhuang(killme2008@gmail.com)]
- *Licensed under the Apache License, Version 2.0 (the "License");
- *you may not use this file except in compliance with the License.
- *You may obtain a copy of the License at
- *             http://www.apache.org/licenses/LICENSE-2.0
- *Unless required by applicable law or agreed to in writing,
- *software distributed under the License is distributed on an "AS IS" BASIS,
- *WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- *either express or implied. See the License for the specific language governing permissions and limitations under the License
- */
-package net.rubyeye.xmemcached.impl;
+package com.openfeint.memcached.impl;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -20,31 +9,18 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import net.rubyeye.xmemcached.HashAlgorithm;
+import net.rubyeye.xmemcached.impl.AbstractMemcachedSessionLocator;
+import net.rubyeye.xmemcached.impl.MemcachedTCPSession;
 import net.rubyeye.xmemcached.networking.MemcachedSession;
 
 import com.google.code.yanf4j.core.Session;
 
 /**
- * ConnectionFactory instance that sets up a ketama compatible connection.
- *
- * <p>
- * This implementation piggy-backs on the functionality of the
- * <code>DefaultConnectionFactory</code> in terms of connections and queue
- * handling. Where it differs is that it uses both the <code>
- * KetamaNodeLocator</code>
- * and the <code>HashAlgorithm.KETAMA_HASH</code> to provide consistent node
- * hashing.
- *
- * @see http://www.last.fm/user/RJ/journal/2007/04/10/392555/
- *
- * </p>
- */
-/**
- * Consistent Hash Algorithm implementation,based on TreeMap.tailMap(hash)
- * method.
- * 
- * @author dennis
- * 
+ * This is grabbed from xmemcached.
+ * what I changed are as follows:
+ * 1. remove cwNginxUpstreamConsistent
+ * 2. sockStr should be hostAddress (port is 11211) or hostAddress:port (port is not 11211)
+ * 3. hash algorithm only used for generating hash
  */
 public class KetamaMemcachedSessionLocator extends
 		AbstractMemcachedSessionLocator {
@@ -55,37 +31,19 @@ public class KetamaMemcachedSessionLocator extends
 	private volatile int maxTries;
 	private final Random random = new Random();
 
-	/**
-	 * compatible with nginx-upstream-consistent,patched by wolfg1969
-	 */
 	static final int DEFAULT_PORT = 11211;
-	private final boolean cwNginxUpstreamConsistent;
 
 	public KetamaMemcachedSessionLocator() {
 		this.hashAlg = HashAlgorithm.KETAMA_HASH;
-		this.cwNginxUpstreamConsistent = false;
-	}
-
-	public KetamaMemcachedSessionLocator(boolean cwNginxUpstreamConsistent) {
-		this.hashAlg = HashAlgorithm.KETAMA_HASH;
-		this.cwNginxUpstreamConsistent = cwNginxUpstreamConsistent;
 	}
 
 	public KetamaMemcachedSessionLocator(HashAlgorithm alg) {
 		this.hashAlg = alg;
-		this.cwNginxUpstreamConsistent = false;
-	}
-
-	public KetamaMemcachedSessionLocator(HashAlgorithm alg,
-			boolean cwNginxUpstreamConsistent) {
-		this.hashAlg = alg;
-		this.cwNginxUpstreamConsistent = cwNginxUpstreamConsistent;
 	}
 
 	public KetamaMemcachedSessionLocator(List<Session> list, HashAlgorithm alg) {
 		super();
 		this.hashAlg = alg;
-		this.cwNginxUpstreamConsistent = false;
 		this.buildMap(list, alg);
 	}
 
@@ -94,16 +52,12 @@ public class KetamaMemcachedSessionLocator extends
 
 		String sockStr;
 		for (Session session : list) {
-			if (this.cwNginxUpstreamConsistent) {
-				InetSocketAddress serverAddress = session
-						.getRemoteSocketAddress();
+      InetSocketAddress serverAddress = session.getRemoteSocketAddress();
+      if (serverAddress.getPort() == DEFAULT_PORT) {
 				sockStr = serverAddress.getAddress().getHostAddress();
-				if (serverAddress.getPort() != DEFAULT_PORT) {
-					sockStr = sockStr + ":" + serverAddress.getPort();
-				}
-			} else {
-				sockStr = String.valueOf(session.getRemoteSocketAddress());
-			}
+      } else {
+				sockStr = serverAddress.getAddress().getHostAddress() + ":" + serverAddress.getPort();
+      }
 			/**
 			 * Duplicate 160 X weight references
 			 */
@@ -111,24 +65,17 @@ public class KetamaMemcachedSessionLocator extends
 			if (session instanceof MemcachedTCPSession) {
 				numReps *= ((MemcachedSession) session).getWeight();
 			}
-			if (alg == HashAlgorithm.KETAMA_HASH) {
-				for (int i = 0; i < numReps / 4; i++) {
-					byte[] digest = HashAlgorithm.computeMd5(sockStr + "-" + i);
-					for (int h = 0; h < 4; h++) {
-						long k = (long) (digest[3 + h * 4] & 0xFF) << 24
-								| (long) (digest[2 + h * 4] & 0xFF) << 16
-								| (long) (digest[1 + h * 4] & 0xFF) << 8
-								| digest[h * 4] & 0xFF;
-						this.getSessionList(sessionMap, k).add(session);
-					}
+      for (int i = 0; i < numReps / 4; i++) {
+        byte[] digest = HashAlgorithm.computeMd5(sockStr + "-" + i);
+        for (int h = 0; h < 4; h++) {
+          long k = (long) (digest[3 + h * 4] & 0xFF) << 24
+              | (long) (digest[2 + h * 4] & 0xFF) << 16
+              | (long) (digest[1 + h * 4] & 0xFF) << 8
+              | digest[h * 4] & 0xFF;
+          this.getSessionList(sessionMap, k).add(session);
+        }
 
-				}
-			} else {
-				for (int i = 0; i < numReps; i++) {
-					long key = alg.hash(sockStr + "-" + i);
-					this.getSessionList(sessionMap, key).add(session);
-				}
-			}
+      }
 		}
 		this.ketamaSessions = sessionMap;
 		this.maxTries = list.size();
