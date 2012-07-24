@@ -4,11 +4,14 @@ require 'memcached/exceptions'
 require File.join(File.dirname(__FILE__), '../target/xmemcached-ext-0.0.1.jar')
 
 class Memcached
-  include_class 'net.rubyeye.xmemcached.XMemcachedClientBuilder'
-  include_class 'net.rubyeye.xmemcached.utils.AddrUtil'
-  include_class 'net.rubyeye.xmemcached.HashAlgorithm'
-  include_class 'com.openfeint.memcached.impl.KetamaMemcachedSessionLocator'
-  include_class 'com.openfeint.memcached.transcoders.SimpleTranscoder'
+  include_class 'java.net.InetSocketAddress'
+  include_class 'net.spy.memcached.MemcachedClient'
+  include_class 'net.spy.memcached.ConnectionFactoryBuilder'
+  include_class 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
+  include_class 'net.spy.memcached.DefaultHashAlgorithm'
+  include_class 'net.spy.memcached.FailureMode'
+  include_class 'net.spy.memcached.transcoders.SimpleTranscoder'
+  include_class 'net.spy.memcached.AddrUtil'
 
   FLAGS = 0x0
   DEFAULTS = {
@@ -20,23 +23,15 @@ class Memcached
   attr_reader :default_ttl
 
   def initialize(addresses, options={})
-    builder = XMemcachedClientBuilder.new AddrUtil.getAddresses(Array(addresses).join(' '))
-    builder.setSessionLocator(KetamaMemcachedSessionLocator.new(HashAlgorithm::FNV1_32_HASH))
-    builder.configuration.setStatisticsServer(false)
-    @client = builder.build
-    @client.setMergeFactor(50)
-    @client.setEnableHeartBeat(false)
+    builder = ConnectionFactoryBuilder.new.
+                                       setLocatorType(Locator::CONSISTENT).
+                                       setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
+    @client = MemcachedClient.new builder.build, AddrUtil.getAddresses(Array(addresses).join(' '))
 
     @options = DEFAULTS.merge(options)
-
     @default_ttl = @options[:default_ttl]
-    @flags = @options[:flags]
 
     @simple_transcoder = SimpleTranscoder.new
-  end
-
-  def servers
-    @client.available_servers.map { |server| server.to_s.split("/").last }
   end
 
   def set(key, value, ttl=@default_ttl, marshal=true, flags=FLAGS)
@@ -81,6 +76,10 @@ class Memcached
       value = String.from_java_bytes data
       value = decode(value, marshal, flags)
     end
+  end
+
+  def servers
+    @client.available_servers.map { |address| address.to_s.split("/").last }
   end
 
   def close
