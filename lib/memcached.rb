@@ -78,6 +78,10 @@ class Memcached
     end
   end
 
+  def flush
+    @client.flush.get
+  end
+
   def servers
     @client.available_servers.map { |address| address.to_s.split("/").last }
   end

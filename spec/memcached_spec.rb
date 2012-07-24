@@ -89,15 +89,25 @@ describe Memcached do
     end
 
     context "delete" do
-      it "should delete" do
+      it "should delete with existing key" do
         @memcached.set "key", "value"
         @memcached.delete "key"
         lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
       end
 
-      it "should missing delete" do
+      it "should not delete with new key" do
         @memcached.delete "key" rescue nil
         lambda { @memcached.delete "key" }.should raise_error(Memcached::NotFound)
+      end
+    end
+
+    context "flush" do
+      it "should flush all keys" do
+        @memcached.set "key1", "value2"
+        @memcached.set "key2", "value2"
+        @memcached.flush
+        lambda { @memcached.get "key1" }.should raise_error(Memcached::NotFound)
+        lambda { @memcached.get "key2" }.should raise_error(Memcached::NotFound)
       end
     end
   end
