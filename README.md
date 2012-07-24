@@ -37,8 +37,9 @@ You can get multiple values at once:
 
 ## Benchmarks
 
-memcached.gem is the fastest memcached gem in MRI, jruby-memcached is
-the fastest memcached gem in JRuby. See [benchmark][1]
+memcached.gem is the fastest memcached gem in MRI,
+jruby-memcached is the fastest memcached gem in JRuby.
+See [benchmark][1]
 
 [0]:"https://github.com/evan/memcached"
 [1]:"https://github.com/aurorafeint/jruby-memcached/blob/master/benchmark.rb"
