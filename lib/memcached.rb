@@ -1,7 +1,7 @@
 require 'java'
 require 'memcached/version'
 require 'memcached/exceptions'
-require File.join(File.dirname(__FILE__), '../target/xmemcached-ext-0.0.1.jar')
+require File.join(File.dirname(__FILE__), '../target/spymemcached-ext-0.0.1.jar')
 
 class Memcached
   include_class 'java.net.InetSocketAddress'
