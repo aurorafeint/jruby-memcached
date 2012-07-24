@@ -1,2 +1,3 @@
-class Memcached::NotFound < RuntimeError; end
-class Memcached::NotStored < RuntimeError; end
+class Memcached::Error < RuntimeError; end
+class Memcached::NotFound < Memcached::Error; end
+class Memcached::NotStored < Memcached::Error; end
