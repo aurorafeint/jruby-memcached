@@ -10,7 +10,7 @@ class Memcached
   include_class 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
   include_class 'net.spy.memcached.DefaultHashAlgorithm'
   include_class 'net.spy.memcached.FailureMode'
-  include_class 'com.openfeint.memcached.transcoders.SimpleTranscoder'
+  include_class 'net.spy.memcached.transcoders.SimpleTranscoder'
 
   FLAGS = 0x0
   DEFAULTS = {

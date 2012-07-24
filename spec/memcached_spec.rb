@@ -55,7 +55,7 @@ describe Memcached do
 
       it "should retry when set failure" do
         Java::NetSpyMemcached::MemcachedClient.any_instance.stubs(:set).raises(Memcached::NotStored)
-        Java::ComOpenfeintMemcachedTranscoders::SimpleTranscoder.any_instance.expects(:setFlags).times(6)
+        Java::NetSpyMemcachedTranscoders::SimpleTranscoder.any_instance.expects(:setFlags).times(6)
         lambda { @memcached.set "key", "value" }.should raise_error(Memcached::NotStored)
       end
     end

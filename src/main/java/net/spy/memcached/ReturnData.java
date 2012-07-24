@@ -1,4 +1,4 @@
-package com.openfeint.memcached;
+package net.spy.memcached;
 
 public class ReturnData {
     private int flags;
