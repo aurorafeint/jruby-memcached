@@ -74,20 +74,20 @@ dalli.close
 # jruby-1.6.7.2
 # jruby --server -Ilib -S benchmark.rb
 #                                     user     system      total        real
-# jruby-memcached set             8.716000   0.000000   8.716000 (  8.716000)
-# jruby-memcached get             7.401000   0.000000   7.401000 (  7.402000)
+# jruby-memcached set             8.745000   0.000000   8.745000 (  8.745000)
+# jruby-memcached get             8.260000   0.000000   8.260000 (  8.260000)
 #                                     user     system      total        real
-# jruby-memcached set             6.530000   0.000000   6.530000 (  6.530000)
-# jruby-memcached get             6.435000   0.000000   6.435000 (  6.435000)
+# jruby-memcached set             6.911000   0.000000   6.911000 (  6.911000)
+# jruby-memcached get             6.895000   0.000000   6.895000 (  6.895000)
 #                                     user     system      total        real
-# jruby-memcached set             6.471000   0.000000   6.471000 (  6.471000)
-# jruby-memcached get             6.413000   0.000000   6.413000 (  6.413000)
+# jruby-memcached set             6.902000   0.000000   6.902000 (  6.902000)
+# jruby-memcached get             6.845000   0.000000   6.845000 (  6.845000)
 #                                     user     system      total        real
-# dalli set                      14.617000   0.000000  14.617000 ( 14.617000)
-# dalli get                      13.197000   0.000000  13.197000 ( 13.197000)
+# dalli set                      15.233000   0.000000  15.233000 ( 15.234000)
+# dalli get                      13.991000   0.000000  13.991000 ( 13.992000)
 #                                     user     system      total        real
-# dalli set                      12.337000   0.000000  12.337000 ( 12.337000)
-# dalli get                      12.699000   0.000000  12.699000 ( 12.699000)
+# dalli set                      12.936000   0.000000  12.936000 ( 12.936000)
+# dalli get                      13.585000   0.000000  13.585000 ( 13.585000)
 #                                     user     system      total        real
-# dalli set                      12.290000   0.000000  12.290000 ( 12.290000)
-# dalli get                      12.823000   0.000000  12.823000 ( 12.823000)
+# dalli set                      13.251000   0.000000  13.251000 ( 13.251000)
+# dalli get                      13.536000   0.000000  13.536000 ( 13.536000)

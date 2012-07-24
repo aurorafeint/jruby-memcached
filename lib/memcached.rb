@@ -1,4 +1,4 @@
-require 'java'
+  require 'java'
 require 'memcached/version'
 require 'memcached/exceptions'
 require File.join(File.dirname(__FILE__), '../target/spymemcached-ext-0.0.1.jar')
@@ -46,7 +46,7 @@ class Memcached
     with_retry do
       value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
-      if @client.add(key, ttl, value.to_java_bytes, @simple_transcoder) === false
+      if @client.add(key, ttl, value.to_java_bytes, @simple_transcoder).get === false
         raise Memcached::NotStored
       end
     end
@@ -56,7 +56,7 @@ class Memcached
     with_retry do
       value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
-      if @client.replace(key, ttl, value.to_java_bytes, @simple_transcoder) === false
+      if @client.replace(key, ttl, value.to_java_bytes, @simple_transcoder).get === false
         raise Memcached::NotStored
       end
     end
@@ -64,7 +64,7 @@ class Memcached
 
   def delete(key)
     with_retry do
-      raise Memcached::NotFound if @client.delete(key) === false
+      raise Memcached::NotFound if @client.delete(key).get === false
     end
   end
 
