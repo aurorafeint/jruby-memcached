@@ -86,6 +86,8 @@ class Memcached
     @client.shutdown
   end
 
+  alias_method :quit, :close
+
   private
   def with_retry
     begin
