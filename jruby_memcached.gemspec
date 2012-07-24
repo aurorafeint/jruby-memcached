@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Memcached::VERSION
   s.authors     = ["Richard Huang"]
   s.email       = ["flyerhzm@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/aurorafeint/jruby-memcached"
   s.summary     = %q{jruby compatible memcached client}
   s.description = %q{jruby memcacached client which is compatible with memcached gem}
 
