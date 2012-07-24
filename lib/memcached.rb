@@ -11,6 +11,7 @@ class Memcached
   include_class 'net.spy.memcached.DefaultHashAlgorithm'
   include_class 'net.spy.memcached.FailureMode'
   include_class 'net.spy.memcached.transcoders.SimpleTranscoder'
+  include_class 'net.spy.memcached.AddrUtil'
 
   FLAGS = 0x0
   DEFAULTS = {
@@ -22,18 +23,13 @@ class Memcached
   attr_reader :default_ttl
 
   def initialize(addresses, options={})
-    @options = DEFAULTS.merge(options)
-    @servers = Array(addresses).map do |address|
-      host, port = address.split(":")
-      InetSocketAddress.new host, port.to_i
-    end
     builder = ConnectionFactoryBuilder.new.
                                        setLocatorType(Locator::CONSISTENT).
                                        setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
-    @client = MemcachedClient.new builder.build, @servers
+    @client = MemcachedClient.new builder.build, AddrUtil.getAddresses(Array(addresses).join(' '))
 
+    @options = DEFAULTS.merge(options)
     @default_ttl = @options[:default_ttl]
-    @flags = @options[:flags]
 
     @simple_transcoder = SimpleTranscoder.new
   end
@@ -83,7 +79,7 @@ class Memcached
   end
 
   def servers
-    @servers.map { |server| server.to_s[1..-1] }
+    @client.available_servers.map { |address| address.to_s.split("/").last }
   end
 
   def close
