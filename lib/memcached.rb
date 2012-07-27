@@ -8,6 +8,7 @@ class Memcached
   include_class 'net.spy.memcached.MemcachedClient'
   include_class 'net.spy.memcached.ConnectionFactoryBuilder'
   include_class 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
+  include_class 'net.spy.memcached.ConnectionFactoryBuilder$Protocol'
   include_class 'net.spy.memcached.DefaultHashAlgorithm'
   include_class 'net.spy.memcached.FailureMode'
   include_class 'net.spy.memcached.transcoders.SimpleTranscoder'
@@ -16,20 +17,25 @@ class Memcached
   FLAGS = 0x0
   DEFAULTS = {
     :default_ttl => 604800,
-    :exception_retry_limit => 5
+    :exception_retry_limit => 5,
+    :binary_protocol => false
   }
 
   attr_reader :options
   attr_reader :default_ttl
 
   def initialize(addresses, options={})
+    @options = DEFAULTS.merge(options)
+    @default_ttl = @options[:default_ttl]
+
     builder = ConnectionFactoryBuilder.new.
                                        setLocatorType(Locator::CONSISTENT).
                                        setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
-    @client = MemcachedClient.new builder.build, AddrUtil.getAddresses(Array(addresses).join(' '))
 
-    @options = DEFAULTS.merge(options)
-    @default_ttl = @options[:default_ttl]
+    if @options[:binary_protocol]
+      builder.setProtocol(Protocol::Binaray)
+    end
+    @client = MemcachedClient.new builder.build, AddrUtil.getAddresses(Array(addresses).join(' '))
 
     @simple_transcoder = SimpleTranscoder.new
   end
