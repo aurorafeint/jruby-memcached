@@ -38,7 +38,7 @@ class Memcached
     with_retry do
       value = encode(value, marshal, flags)
       @simple_transcoder.setFlags(flags)
-      @client.set(key, ttl, value.to_java_bytes, @simple_transcoder)
+      @client.set(key, ttl, value.to_java_bytes, @simple_transcoder).get
     end
   end
 

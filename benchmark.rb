@@ -17,7 +17,7 @@ dalli = Dalli::Client.new(['localhost:11211'])
   Benchmark.bm(30) {|bm|
     if JRUBY
       bm.report("jruby-memcached set") {
-        100_000.times { memcached.set('foo', 'bar').get }
+        100_000.times { memcached.set('foo', 'bar') }
       }
       bm.report("jruby-memcached get") {
         100_000.times { memcached.get('foo') }
