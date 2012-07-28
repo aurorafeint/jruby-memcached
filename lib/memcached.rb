@@ -3,16 +3,15 @@ require 'memcached/version'
 require 'memcached/exceptions'
 require File.join(File.dirname(__FILE__), '../target/spymemcached-ext-0.0.1.jar')
 
+java_import 'net.spy.memcached.MemcachedClient'
+java_import 'net.spy.memcached.ConnectionFactoryBuilder'
+java_import 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
+java_import 'net.spy.memcached.ConnectionFactoryBuilder$Protocol'
+java_import 'net.spy.memcached.DefaultHashAlgorithm'
+java_import 'net.spy.memcached.transcoders.SimpleTranscoder'
+java_import 'net.spy.memcached.AddrUtil'
+
 class Memcached
-  include_class 'java.net.InetSocketAddress'
-  include_class 'net.spy.memcached.MemcachedClient'
-  include_class 'net.spy.memcached.ConnectionFactoryBuilder'
-  include_class 'net.spy.memcached.ConnectionFactoryBuilder$Locator'
-  include_class 'net.spy.memcached.ConnectionFactoryBuilder$Protocol'
-  include_class 'net.spy.memcached.DefaultHashAlgorithm'
-  include_class 'net.spy.memcached.FailureMode'
-  include_class 'net.spy.memcached.transcoders.SimpleTranscoder'
-  include_class 'net.spy.memcached.AddrUtil'
 
   FLAGS = 0x0
   DEFAULTS = {
