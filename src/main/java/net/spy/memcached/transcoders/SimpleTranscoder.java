@@ -32,14 +32,11 @@ public class SimpleTranscoder implements Transcoder<Object> {
     }
 
     public CachedData encode(Object o) {
-        byte[] b = (byte[]) o;
-        return new CachedData(getFlags(), b, getMaxSize());
+        return new CachedData(getFlags(), (byte[]) o, getMaxSize());
     }
 
     public Object decode(CachedData d) {
-        byte[] data = d.getData();
-        int flags = d.getFlags();
-        return new ReturnData(flags, data);
+        return new ReturnData(d.getFlags(), d.getData());
     }
 
     public int getMaxSize() {
