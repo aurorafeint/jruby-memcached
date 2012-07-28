@@ -16,9 +16,11 @@ class Memcached
 
   FLAGS = 0x0
   DEFAULTS = {
+    :binary_protocol => false,
     :default_ttl => 604800,
+    :distribution => :consistent_ketama,
     :exception_retry_limit => 5,
-    :binary_protocol => false
+    :hash => :fnv1_32,
   }
 
   attr_reader :options
@@ -28,13 +30,25 @@ class Memcached
     @options = DEFAULTS.merge(options)
     @default_ttl = @options[:default_ttl]
 
-    builder = ConnectionFactoryBuilder.new.
-                                       setLocatorType(Locator::CONSISTENT).
-                                       setHashAlg(DefaultHashAlgorithm::FNV1_32_HASH)
+    builder = ConnectionFactoryBuilder.new
+
+    @options[:distribution] = :consistent if @options[:distribution] == :ketama || @options[:distribution] == :consistent_ketama
+    unless [:array_mod, :consistent].include? @options[:distribution]
+      raise Memcached::NotSupport.new("#{@options[:distribution]} distribution algorithm doesn't support yet.")
+    end
+    distribution_algorithm = Locator.const_get @options[:distribution].to_s.upcase
+    builder.setLocatorType(distribution_algorithm)
 
     if @options[:binary_protocol]
-      builder.setProtocol(Protocol::Binaray)
+      builder.setProtocol(Protocol::BINARY)
     end
+
+    unless [:native, :crc, :fnv1_64, :fnv1a_64, :fnv1_32, :fnv1a_32, :ketama].include? @options[:hash]
+      raise Memcached::NotSupport.new("#{@options[:hash]} hash algorithm doesn't support yet.")
+    end
+    hash_algorithm = DefaultHashAlgorithm.const_get "#{@options[:hash]}_HASH".upcase
+    builder.setHashAlg hash_algorithm
+
     @client = MemcachedClient.new builder.build, AddrUtil.getAddresses(Array(addresses).join(' '))
 
     @simple_transcoder = SimpleTranscoder.new
