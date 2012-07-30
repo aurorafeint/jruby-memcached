@@ -1,40 +1,22 @@
 require 'spec_helper'
 
+com.openfeint.memcached.MemcachedLibrary.new.load(JRuby.runtime, false)
 describe Memcached do
   context "localhost" do
-    before(:all) { @memcached = Memcached.new("127.0.0.1:11211") }
-    after(:all) { @memcached.close }
+    before(:all) { @memcached = Memcached.new(["127.0.0.1:11211"]) }
+    after(:all) { @memcached.shutdown }
 
     it "should get all servers" do
       @memcached.servers.should == ["127.0.0.1:11211"]
     end
 
     context "initialize" do
-      before(:all) do
-        @memcached_with_options = Memcached.new("127.0.0.1:11211", :hash => :fnv1_32,
-                                                                   :distribution => :ketama,
-                                                                   :default_ttl => 900)
-      end
-      after(:all) { @memcached_with_options.close }
-
-      it "should with option hash" do
-        @memcached_with_options.options[:hash].should == :fnv1_32
-      end
-
-      it "should with option distribution" do
-        @memcached_with_options.options[:distribution].should == :consistent
-      end
-
       it "should raise error with unsupported option hash" do
         lambda { Memcached.new("127.0.0.1:11211", :hash => :unknown) }.should raise_error(Memcached::NotSupport)
       end
 
       it "should raise error with unsupported option distribution" do
         lambda { Memcached.new("127.0.0.1:11211", :distribution => :unknown) }.should raise_error(Memcached::NotSupport)
-      end
-
-      it "should get default ttl" do
-        @memcached_with_options.default_ttl.should == 900
       end
     end
 
@@ -68,12 +50,6 @@ describe Memcached do
         @memcached.get("key").should == "value"
         sleep 1
         lambda { @memcached.get("key") }.should raise_error(Memcached::NotFound)
-      end
-
-      it "should retry when set failure" do
-        Java::NetSpyMemcached::MemcachedClient.any_instance.stubs(:set).raises(Memcached::NotStored)
-        Java::NetSpyMemcachedTranscoders::SimpleTranscoder.any_instance.expects(:setFlags).times(6)
-        lambda { @memcached.set "key", "value" }.should raise_error(Memcached::NotStored)
       end
     end
 

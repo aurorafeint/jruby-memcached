@@ -2,15 +2,17 @@ require 'benchmark'
 
 JRUBY = defined?(JRUBY_VERSION)
 
+require 'rubygems'
 if JRUBY
   require 'lib/memcached'
+  require 'jruby-spymemcached'
 else
   require 'memcached'
 end
-require 'rubygems'
 require 'dalli'
 
 memcached = Memcached.new(['localhost:11211'])
+spymemcached = Spymemcached.new(['localhost:11211']) if JRUBY
 dalli = Dalli::Client.new(['localhost:11211'])
 
 3.to_i.times {
@@ -21,6 +23,12 @@ dalli = Dalli::Client.new(['localhost:11211'])
       }
       bm.report("jruby-memcached get") {
         100_000.times { memcached.get('foo') }
+      }
+      bm.report("jruby-spymemcached set") {
+        100_000.times { spymemcached.set('foo', 'bar') }
+      }
+      bm.report("jruby-spymemcached get") {
+        100_000.times { spymemcached.get('foo') }
       }
     else
       bm.report("memcached set") {
@@ -44,9 +52,9 @@ dalli = Dalli::Client.new(['localhost:11211'])
   }
 }
 
-memcached.close
+memcached.shutdown
+spymemcached.shutdown if JRUBY
 dalli.close
-
 
 # MBP 2.8G i7
 #
