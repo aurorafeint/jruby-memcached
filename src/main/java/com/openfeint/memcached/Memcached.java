@@ -124,10 +124,10 @@ public class Memcached extends RubyObject {
 
             client = new MemcachedClient(builder.build(), addresses);
 
-            if ("openfeint".equals(transcoderValue)) {
-              transcoder = new OpenfeintTranscoder(ruby);
+            if ("marshal_zlib".equals(transcoderValue)) {
+              transcoder = new MarshalZlibTranscoder(ruby);
             } else {
-              transcoder = new SimpleTranscoder(ruby);
+              transcoder = new MarshalTranscoder(ruby);
             }
         } catch (IOException ioe) {
             throw context.runtime.newIOErrorFromException(ioe);

@@ -12,18 +12,18 @@ import org.jruby.runtime.marshal.UnmarshalStream;
 
 /**
  *
- * SimpleTranscoder do marshaling and unmarshaling.
+ * MarshalTranscoder does marshaling and unmarshaling.
  *
  */
-public class SimpleTranscoder implements Transcoder<IRubyObject> {
+public class MarshalTranscoder implements Transcoder<IRubyObject> {
     private Ruby ruby;
     private int flags;
 
-    public SimpleTranscoder(Ruby ruby) {
+    public MarshalTranscoder(Ruby ruby) {
         this(ruby, 0);
     }
 
-    public SimpleTranscoder(Ruby ruby, int flags) {
+    public MarshalTranscoder(Ruby ruby, int flags) {
         this.ruby = ruby;
         this.flags = flags;
     }

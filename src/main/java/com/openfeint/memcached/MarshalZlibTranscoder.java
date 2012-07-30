@@ -18,18 +18,18 @@ import com.jcraft.jzlib.JZlib;
 
 /**
  *
- * OpenfeintTranscoder do marshaling/unmarshaling and compressing/decompressing with zlib.
+ * MarshalZlibTranscoder do marshaling/unmarshaling and compressing/decompressing with zlib.
  *
  */
-public class OpenfeintTranscoder implements Transcoder<IRubyObject> {
+public class MarshalZlibTranscoder implements Transcoder<IRubyObject> {
     private Ruby ruby;
     private int flags;
 
-    public OpenfeintTranscoder(Ruby ruby) {
+    public MarshalZlibTranscoder(Ruby ruby) {
         this(ruby, 1);
     }
 
-    public OpenfeintTranscoder(Ruby ruby, int flags) {
+    public MarshalZlibTranscoder(Ruby ruby, int flags) {
         this.ruby = ruby;
         this.flags = flags;
     }
@@ -57,7 +57,6 @@ public class OpenfeintTranscoder implements Transcoder<IRubyObject> {
 
             return new CachedData(getFlags(), bytes, bytes.length);
         } catch (IOException ioe) {
-            System.out.println("io exception: " + ioe.getMessage());
             throw ruby.newIOErrorFromException(ioe);
         }
     }
