@@ -52,10 +52,14 @@ dalli = Dalli::Client.new(['localhost:11211'])
   }
 }
 
-memcached.shutdown
-spymemcached.shutdown if JRUBY
+if JRUBY
+  memcached.shutdown
+  spymemcached.shutdown
+end
 dalli.close
 
+# I run benchmark for each client 3 times, but only list the last result for each.
+#
 # MBP 2.8G i7    jruby-memcached 0.3.0
 #
 # ruby-1.9.3-p194
