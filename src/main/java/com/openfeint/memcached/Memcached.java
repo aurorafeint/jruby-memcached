@@ -217,6 +217,17 @@ public class Memcached extends RubyObject {
         }
         return value;
     }
+    
+    @JRubyMethod
+    public IRubyObject multiget(ThreadContext context, IRubyObject keys) {
+        RubyHash results = RubyHash.newHash(ruby);
+
+        Map<String, IRubyObject> bulkResults = client.getBulk(keys.convertToArray(), transcoder);
+        for (Map.Entry<String, IRubyObject> entry : bulkResults.entrySet()) {
+            results.op_aset(context, ruby.newString(entry.getKey()), entry.getValue());
+        }
+        return results;
+    }
 
     @JRubyMethod
     public  IRubyObject incr(ThreadContext context, IRubyObject key) {

@@ -20,15 +20,17 @@ describe Memcached do
       end
     end
 
-    context "set/get" do
+    context "set/get/multiget" do
       it "should set/get with plain text" do
         @memcached.set "key", "value"
         @memcached.get("key").should == "value"
+        @memcached.multiget(["key"]).should == {"key" => "value"}
       end
 
       it "should set/get with compressed text" do
         @memcached.set "key", "x\234c?P?*?/?I\001\000\b8\002a"
         @memcached.get("key").should == "x\234c?P?*?/?I\001\000\b8\002a"
+        @memcached.multiget(["key"]).should == {"key" => "x\234c?P?*?/?I\001\000\b8\002a"}
       end
     end
 
@@ -41,6 +43,18 @@ describe Memcached do
       it "should get missing" do
         @memcached.delete "key" rescue nil
         lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+      end
+    end
+
+    context "multiget" do
+      it "should get hash containing nil value" do
+        @memcached.set "key", nil, 0
+        @memcached.multiget(["key"]).should == {"key" => nil}
+      end
+
+      it "should get empty hash" do
+        @memcached.delete "key" rescue nil
+        @memcached.multiget(["key"]).should be_empty
       end
     end
 
