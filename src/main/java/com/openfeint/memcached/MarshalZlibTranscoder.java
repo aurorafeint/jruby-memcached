@@ -1,10 +1,8 @@
 package com.openfeint.memcached;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
+import com.jcraft.jzlib.ZOutputStream;
+import com.jcraft.jzlib.ZInputStream;
+import com.jcraft.jzlib.JZlib;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
@@ -12,9 +10,12 @@ import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.runtime.marshal.MarshalStream;
 import org.jruby.runtime.marshal.UnmarshalStream;
 import org.jruby.util.ByteList;
-import com.jcraft.jzlib.ZOutputStream;
-import com.jcraft.jzlib.ZInputStream;
-import com.jcraft.jzlib.JZlib;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 /**
  *

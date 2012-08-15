@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-com.openfeint.memcached.MemcachedLibrary.new.load(JRuby.runtime, false)
 describe Memcached do
   context "localhost" do
     before(:all) { @memcached = Memcached.new(["127.0.0.1:11211"]) }

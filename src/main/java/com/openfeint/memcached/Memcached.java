@@ -1,15 +1,6 @@
 package com.openfeint.memcached;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import net.spy.memcached.AddrUtil;
-import net.spy.memcached.CachedData;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.ConnectionFactoryBuilder.Locator;
 import net.spy.memcached.ConnectionFactoryBuilder.Protocol;
@@ -28,6 +19,15 @@ import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+@JRubyClass(name = "Memcached")
 public class Memcached extends RubyObject {
     private Ruby ruby;
 
