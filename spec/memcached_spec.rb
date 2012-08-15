@@ -6,10 +6,18 @@ describe Memcached do
     after(:all) { @memcached.shutdown }
 
     it "should get all servers" do
+      @memcached.set "foo", "bar"
       @memcached.servers.should == ["127.0.0.1:11211"]
     end
 
     context "initialize" do
+      it "should connect to 127.0.0.1:11211 if no server defined" do
+        memcached = Memcached.new
+        memcached.set "foo", "bar"
+        memcached.servers.should == ["127.0.0.1:11211"]
+        memcached.shutdown
+      end
+
       it "should raise error with unsupported option hash" do
         lambda { Memcached.new("127.0.0.1:11211", :hash => :unknown) }.should raise_error(Memcached::NotSupport)
       end

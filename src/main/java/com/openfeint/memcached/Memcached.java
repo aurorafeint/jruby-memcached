@@ -44,19 +44,23 @@ public class Memcached extends RubyObject {
         this.ruby = ruby;
     }
 
-    @JRubyMethod(name = "initialize", required = 1, rest = true)
+    @JRubyMethod(name = "initialize", optional = 2)
     public IRubyObject initialize(ThreadContext context, IRubyObject[] args) {
-        RubyHash options = new RubyHash(ruby);
-        List<String> servers = new ArrayList<String>();
-        if (args[args.length - 1] instanceof RubyHash) {
-            options = args[args.length - 1].convertToHash();
+        RubyHash options;
+        if (args.length > 1) {
+            options = args[1].convertToHash();
+        } else {
+            options = new RubyHash(ruby);
         }
-        for (IRubyObject arg : args) {
-            if (arg instanceof RubyString) {
-                servers.add(arg.convertToString().toString());
-            } else if (arg instanceof RubyArray) {
-                servers.addAll((List<String>) arg.convertToArray());
+        List<String> servers = new ArrayList<String>();
+        if (args.length > 0) {
+            if (args[0] instanceof RubyString) {
+                servers.add(args[0].convertToString().toString());
+            } else if (args[0] instanceof RubyArray) {
+                servers.addAll((List<String>) args[0].convertToArray());
             }
+        } else {
+            servers.add("127.0.0.1:11211");
         }
         List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);
         try {
