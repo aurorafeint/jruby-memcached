@@ -21,6 +21,7 @@ import org.jruby.RubyClass;
 import org.jruby.RubyException;
 import org.jruby.RubyHash;
 import org.jruby.RubyObject;
+import org.jruby.RubyString;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.exceptions.RaiseException;
@@ -149,15 +150,13 @@ public class Memcached extends RubyObject {
         return ruby.newArray(addresses);
     }
 
-    @JRubyMethod
-    public IRubyObject add(ThreadContext context, IRubyObject key, IRubyObject value) {
-        return add(context, key, value, ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject add(ThreadContext context, IRubyObject key, IRubyObject value, IRubyObject timeout) {
+    @JRubyMethod(name = "add", required = 2, optional = 3)
+    public IRubyObject add(ThreadContext context, IRubyObject[] args) {
+        RubyString key = args[0].convertToString();
+        IRubyObject value = args[1];
+        int timeout = getTimeout(args);
         try {
-            boolean result = client.add(key.toString(), (int)timeout.convertToInteger().getLongValue(), value, transcoder).get();
+            boolean result = client.add(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
                 throw newNotStored(ruby, "not stored");
             }
@@ -169,15 +168,13 @@ public class Memcached extends RubyObject {
         }
     }
 
-    @JRubyMethod
-    public IRubyObject replace(ThreadContext context, IRubyObject key, IRubyObject value) {
-        return replace(context, key, value, ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject replace(ThreadContext context, IRubyObject key, IRubyObject value, IRubyObject timeout) {
+    @JRubyMethod(name = "replace", required = 2, optional = 3)
+    public IRubyObject replace(ThreadContext context, IRubyObject [] args) {
+        RubyString key = args[0].convertToString();
+        IRubyObject value = args[1];
+        int timeout = getTimeout(args);
         try {
-            boolean result = client.replace(key.toString(), (int)timeout.convertToInteger().getLongValue(), value, transcoder).get();
+            boolean result = client.replace(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
                 throw newNotStored(ruby, "not stored");
             }
@@ -189,15 +186,13 @@ public class Memcached extends RubyObject {
         }
     }
 
-    @JRubyMethod
-    public IRubyObject set(ThreadContext context, IRubyObject key, IRubyObject value) {
-        return set(context, key, value, ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject set(ThreadContext context, IRubyObject key, IRubyObject value, IRubyObject timeout) {
+    @JRubyMethod(name = "set", required = 2, optional = 3)
+    public IRubyObject set(ThreadContext context, IRubyObject[] args) {
+        RubyString key = args[0].convertToString();
+        IRubyObject value = args[1];
+        int timeout = getTimeout(args);
         try {
-            boolean result = client.set(key.toString(), (int)timeout.convertToInteger().getLongValue(), value, transcoder).get();
+            boolean result = client.set(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
                 throw newNotStored(ruby, "not stored");
             }
@@ -217,7 +212,7 @@ public class Memcached extends RubyObject {
         }
         return value;
     }
-    
+
     @JRubyMethod
     public IRubyObject multiget(ThreadContext context, IRubyObject keys) {
         RubyHash results = RubyHash.newHash(ruby);
@@ -229,35 +224,21 @@ public class Memcached extends RubyObject {
         return results;
     }
 
-    @JRubyMethod
-    public  IRubyObject incr(ThreadContext context, IRubyObject key) {
-        return incr(context, key, ruby.newFixnum(1), ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject incr(ThreadContext context, IRubyObject key, IRubyObject by) {
-        return incr(context, key, by, ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject incr(ThreadContext context, IRubyObject key, IRubyObject by, IRubyObject timeout) {
-        long result = client.incr(key.toString(), (int)by.convertToInteger().getLongValue(), 1, (int)timeout.convertToInteger().getLongValue());
+    @JRubyMethod(name = "incr", required = 1, optional = 2)
+    public IRubyObject incr(ThreadContext context, IRubyObject[] args) {
+        RubyString key = args[0].convertToString();
+        int by = getIncrDecrBy(args);
+        int timeout = getTimeout(args);
+        long result = client.incr(key.toString(), by, 1, timeout);
         return ruby.newFixnum(result);
     }
 
-    @JRubyMethod
-    public IRubyObject decr(ThreadContext context, IRubyObject key) {
-        return decr(context, key, ruby.newFixnum(1), ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject decr(ThreadContext context, IRubyObject key, IRubyObject by) {
-        return decr(context, key, by, ruby.newFixnum(ttl));
-    }
-
-    @JRubyMethod
-    public IRubyObject decr(ThreadContext context, IRubyObject key, IRubyObject by, IRubyObject timeout) {
-        long result = client.decr(key.toString(), (int)by.convertToInteger().getLongValue(), 0, (int)timeout.convertToInteger().getLongValue());
+    @JRubyMethod(name = "decr", required = 1, optional = 2)
+    public IRubyObject decr(ThreadContext context, IRubyObject[] args) {
+        RubyString key = args[0].convertToString();
+        int by = getIncrDecrBy(args);
+        int timeout = getTimeout(args);
+        long result = client.decr(key.toString(), by, 0, timeout);
         return ruby.newFixnum(result);
     }
 
@@ -306,6 +287,20 @@ public class Memcached extends RubyObject {
         client.shutdown();
 
         return context.nil;
+    }
+
+    private int getTimeout(IRubyObject[] args) {
+        if (args.length > 2) {
+          return (int) args[2].convertToInteger().getLongValue();
+        }
+        return ttl;
+    }
+
+    private int getIncrDecrBy(IRubyObject[] args) {
+        if (args.length > 1) {
+            return (int) args[1].convertToInteger().getLongValue();
+        }
+        return 1;
     }
 
     @JRubyClass(name="Memcached::Error", parent="RuntimeError")
