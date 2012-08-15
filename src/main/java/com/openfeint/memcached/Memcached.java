@@ -1,5 +1,6 @@
 package com.openfeint.memcached;
 
+import com.openfeint.memcached.error.Error;
 import net.spy.memcached.AddrUtil;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.ConnectionFactoryBuilder.Locator;
@@ -9,13 +10,11 @@ import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
-import org.jruby.RubyException;
 import org.jruby.RubyHash;
 import org.jruby.RubyObject;
 import org.jruby.RubyString;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
-import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
@@ -89,7 +88,7 @@ public class Memcached extends RubyObject {
             } else if ("ketama".equals(distributionValue) || "consistent_ketama".equals(distributionValue)) {
                 builder.setLocatorType(Locator.CONSISTENT);
             } else {
-                throw newNotSupport(ruby, "distribution not support");
+                throw Error.newNotSupport(ruby, "distribution not support");
             }
 
             if (hashValue == null) {
@@ -110,7 +109,7 @@ public class Memcached extends RubyObject {
             } else if ("ketama".equals(hashValue)) {
                 builder.setHashAlg(DefaultHashAlgorithm.KETAMA_HASH);
             } else {
-                throw newNotSupport(ruby, "hash not support");
+                throw Error.newNotSupport(ruby, "hash not support");
             }
 
             if ("true".equals(binaryValue)) {
@@ -158,7 +157,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.add(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
-                throw newNotStored(ruby, "not stored");
+                throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -176,7 +175,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.replace(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
-                throw newNotStored(ruby, "not stored");
+                throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -194,7 +193,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.set(key.toString(), timeout, value, transcoder).get();
             if (result == false) {
-                throw newNotStored(ruby, "not stored");
+                throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -208,7 +207,7 @@ public class Memcached extends RubyObject {
     public IRubyObject get(ThreadContext context, IRubyObject key) {
         IRubyObject value = client.get(key.toString(), transcoder);
         if (value == null) {
-          throw newNotFound(ruby, "not found");
+          throw Error.newNotFound(ruby, "not found");
         }
         return value;
     }
@@ -247,7 +246,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.delete(key.toString()).get();
             if (result == false) {
-                throw newNotFound(ruby, "not found");
+                throw Error.newNotFound(ruby, "not found");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -301,31 +300,5 @@ public class Memcached extends RubyObject {
             return (int) args[1].convertToInteger().getLongValue();
         }
         return 1;
-    }
-
-    @JRubyClass(name="Memcached::Error", parent="RuntimeError")
-    public static class Error {}
-    @JRubyClass(name="Memcached::NotFound", parent="Memcached::Error")
-    public static class NotFound extends Error {}
-    @JRubyClass(name="Memcached::NotStored", parent="Memcached::Error")
-    public static class NotStored extends Error {}
-    @JRubyClass(name="Memcached::NotSupport", parent="Memcached::Error")
-    public static class NotSupport extends Error {}
-
-    static RaiseException newNotFound(Ruby ruby, String message) {
-        return newMemcachedError(ruby, "NotFound", message);
-    }
-
-    static RaiseException newNotStored(Ruby ruby, String message) {
-        return newMemcachedError(ruby, "NotStored", message);
-    }
-
-    static RaiseException newNotSupport(Ruby ruby, String message) {
-        return newMemcachedError(ruby, "NotSupport", message);
-    }
-
-    private static RaiseException newMemcachedError(Ruby ruby, String klass, String message) {
-        RubyClass errorClass = ruby.getModule("Memcached").getClass(klass);
-        return new RaiseException(RubyException.newException(ruby, errorClass, message), true);
     }
 }
