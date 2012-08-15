@@ -39,9 +39,14 @@ public class Memcached extends RubyObject {
 
     private int ttl;
 
+    private String prefixKey;
+
     public Memcached(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
         this.ruby = ruby;
+
+        ttl = 604800;
+        prefixKey = "";
     }
 
     @JRubyMethod(name = "initialize", optional = 2)
@@ -55,7 +60,7 @@ public class Memcached extends RubyObject {
         List<String> servers = new ArrayList<String>();
         if (args.length > 0) {
             if (args[0] instanceof RubyString) {
-                servers.add(args[0].convertToString().toString());
+                servers.add(args[0].toString());
             } else if (args[0] instanceof RubyArray) {
                 servers.addAll((List<String>) args[0].convertToArray());
             }
@@ -66,43 +71,41 @@ public class Memcached extends RubyObject {
         try {
             ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
 
-            String distributionValue = null;
-            String hashValue = null;
-            String binaryValue = null;
-            String defaultTTL = null;
+            String distributionValue = "ketama";
+            String hashValue = "fnv1_32";
+            String binaryValue = "false";
             String transcoderValue = null;
             if (!options.isEmpty()) {
-              RubyHash opts = options.convertToHash();
-              if (opts.containsKey(ruby.newSymbol("distribution"))) {
-                distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
-              }
-              if (opts.containsKey(ruby.newSymbol("hash"))) {
-                hashValue = opts.get(ruby.newSymbol("hash")).toString();
-              }
-              if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
-                binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
-              }
-              if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
-                defaultTTL = opts.get(ruby.newSymbol("default_ttl")).toString();
-              }
-              if (opts.containsKey(ruby.newSymbol("transcoder"))) {
-                transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
-              }
+                RubyHash opts = options.convertToHash();
+                if (opts.containsKey(ruby.newSymbol("distribution"))) {
+                    distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("hash"))) {
+                    hashValue = opts.get(ruby.newSymbol("hash")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
+                    binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
+                    ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
+                }
+                if (opts.containsKey(ruby.newSymbol("namespace"))) {
+                    prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("prefix_key"))) {
+                    prefixKey = opts.get(ruby.newSymbol("prefix_key")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("transcoder"))) {
+                    transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
+                }
             }
 
-            if (distributionValue == null) {
-                distributionValue = "ketama";
-            }
             if ("array_mod".equals(distributionValue)) {
                 builder.setLocatorType(Locator.ARRAY_MOD);
             } else if ("ketama".equals(distributionValue) || "consistent_ketama".equals(distributionValue)) {
                 builder.setLocatorType(Locator.CONSISTENT);
             } else {
                 throw Error.newNotSupport(ruby, "distribution not support");
-            }
-
-            if (hashValue == null) {
-                hashValue = "fnv1_32";
             }
             if ("native".equals(hashValue)) {
                 builder.setHashAlg(DefaultHashAlgorithm.NATIVE_HASH);
@@ -124,12 +127,6 @@ public class Memcached extends RubyObject {
 
             if ("true".equals(binaryValue)) {
                 builder.setProtocol(Protocol.BINARY);
-            }
-
-            if (defaultTTL == null) {
-                ttl = 604800;
-            } else {
-                ttl = Integer.parseInt(defaultTTL);
             }
 
             client = new MemcachedClient(builder.build(), addresses);
@@ -161,11 +158,11 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "add", required = 2, optional = 3)
     public IRubyObject add(ThreadContext context, IRubyObject[] args) {
-        RubyString key = args[0].convertToString();
+        String key = getFullKey(args[0]);
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
-            boolean result = client.add(key.toString(), timeout, value, transcoder).get();
+            boolean result = client.add(key, timeout, value, transcoder).get();
             if (result == false) {
                 throw Error.newNotStored(ruby, "not stored");
             }
@@ -179,11 +176,11 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "replace", required = 2, optional = 3)
     public IRubyObject replace(ThreadContext context, IRubyObject [] args) {
-        RubyString key = args[0].convertToString();
+        String key = getFullKey(args[0]);
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
-            boolean result = client.replace(key.toString(), timeout, value, transcoder).get();
+            boolean result = client.replace(key, timeout, value, transcoder).get();
             if (result == false) {
                 throw Error.newNotStored(ruby, "not stored");
             }
@@ -197,11 +194,11 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "set", required = 2, optional = 3)
     public IRubyObject set(ThreadContext context, IRubyObject[] args) {
-        RubyString key = args[0].convertToString();
+        String key = getFullKey(args[0]);
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
-            boolean result = client.set(key.toString(), timeout, value, transcoder).get();
+            boolean result = client.set(key, timeout, value, transcoder).get();
             if (result == false) {
                 throw Error.newNotStored(ruby, "not stored");
             }
@@ -215,7 +212,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod
     public IRubyObject get(ThreadContext context, IRubyObject key) {
-        IRubyObject value = client.get(key.toString(), transcoder);
+        IRubyObject value = client.get(getFullKey(key), transcoder);
         if (value == null) {
           throw Error.newNotFound(ruby, "not found");
         }
@@ -235,26 +232,26 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "incr", required = 1, optional = 2)
     public IRubyObject incr(ThreadContext context, IRubyObject[] args) {
-        RubyString key = args[0].convertToString();
+        String key = getFullKey(args[0]);
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
-        long result = client.incr(key.toString(), by, 1, timeout);
+        long result = client.incr(key, by, 1, timeout);
         return ruby.newFixnum(result);
     }
 
     @JRubyMethod(name = "decr", required = 1, optional = 2)
     public IRubyObject decr(ThreadContext context, IRubyObject[] args) {
-        RubyString key = args[0].convertToString();
+        String key = getFullKey(args[0]);
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
-        long result = client.decr(key.toString(), by, 0, timeout);
+        long result = client.decr(key, by, 0, timeout);
         return ruby.newFixnum(result);
     }
 
     @JRubyMethod
     public IRubyObject delete(ThreadContext context, IRubyObject key) {
         try {
-            boolean result = client.delete(key.toString()).get();
+            boolean result = client.delete(getFullKey(key)).get();
             if (result == false) {
                 throw Error.newNotFound(ruby, "not found");
             }
@@ -310,5 +307,9 @@ public class Memcached extends RubyObject {
             return (int) args[1].convertToInteger().getLongValue();
         }
         return 1;
+    }
+
+    private String getFullKey(IRubyObject key) {
+        return prefixKey + key.toString();
     }
 }

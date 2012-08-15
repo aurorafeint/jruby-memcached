@@ -120,6 +120,14 @@ describe Memcached do
         @memcached.delete "key" rescue nil
         lambda { @memcached.delete "key" }.should raise_error(Memcached::NotFound)
       end
+
+      #context "incr/decr" do
+        #it "should incr key" do
+          #@memcached.incr "intkey"
+          #@memcached.incr "intkey"
+          #@memcached.get("intkey").should == 1
+        #end
+      #end
     end
 
     context "flush" do
@@ -129,6 +137,45 @@ describe Memcached do
         @memcached.flush
         lambda { @memcached.get "key1" }.should raise_error(Memcached::NotFound)
         lambda { @memcached.get "key2" }.should raise_error(Memcached::NotFound)
+      end
+    end
+
+    context "namespace/prefix_key" do
+      it "should get/set with namespace" do
+        memcached = Memcached.new("127.0.0.1:11211", :namespace => "jruby")
+        memcached.set "key", "value"
+        memcached.get("key").should == "value"
+        memcached.shutdown
+        @memcached.get("jrubykey").should == "value"
+      end
+
+      context "prefix_key" do
+        before(:all) { @prefix_memcached = Memcached.new("127.0.0.1:11211", :prefix_key => "jruby") }
+        after(:all) { @prefix_memcached.shutdown }
+
+        it "should get/set with prefix_key" do
+          @prefix_memcached.set "key", "value"
+          @prefix_memcached.get("key").should == "value"
+          @memcached.get("jrubykey").should == "value"
+        end
+
+        #it "should incr/decr with prefix_key" do
+          #@prefix_memcached.incr "intkey"
+          #@prefix_memcached.decr "intkey"
+          #@memcached.get("jrubyintkey").should == 0
+        #end
+
+        it "should add/replace with prefix_key" do
+          @prefix_memcached.add "newkey", "value"
+          @prefix_memcached.replace "newkey", "new_value"
+          @memcached.get("jrubynewkey").should == "new_value"
+        end
+
+        it "should delete with prefix_key" do
+          @prefix_memcached.set "key", "value"
+          @prefix_memcached.delete "key"
+          lambda { @memcached.get("jrubykey") }.should raise_error(Memcached::NotFound)
+        end
       end
     end
   end
