@@ -11,6 +11,7 @@ import net.spy.memcached.DefaultHashAlgorithm;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
+import org.jruby.RubyArray;
 import org.jruby.RubyClass;
 import org.jruby.RubyHash;
 import org.jruby.RubyObject;
@@ -43,18 +44,21 @@ public class Memcached extends RubyObject {
         this.ruby = ruby;
     }
 
-    @JRubyMethod
-    public IRubyObject initialize(ThreadContext context, IRubyObject servers) {
-        return initialize(context, servers, context.nil);
-    }
-    @JRubyMethod
-    public IRubyObject initialize(ThreadContext context, IRubyObject servers, IRubyObject options) {
-        List<InetSocketAddress> addresses;
-        if ("java.lang.String".equals(servers.getJavaClass().getName())) {
-            addresses = AddrUtil.getAddresses(servers.convertToString().toString());
-        } else {
-            addresses = AddrUtil.getAddresses((List<String>)servers.convertToArray());
+    @JRubyMethod(name = "initialize", required = 1, rest = true)
+    public IRubyObject initialize(ThreadContext context, IRubyObject[] args) {
+        RubyHash options = new RubyHash(ruby);
+        List<String> servers = new ArrayList<String>();
+        if (args[args.length - 1] instanceof RubyHash) {
+            options = args[args.length - 1].convertToHash();
         }
+        for (IRubyObject arg : args) {
+            if (arg instanceof RubyString) {
+                servers.add(arg.convertToString().toString());
+            } else if (arg instanceof RubyArray) {
+                servers.addAll((List<String>) arg.convertToArray());
+            }
+        }
+        List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);
         try {
             ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
 
@@ -63,7 +67,7 @@ public class Memcached extends RubyObject {
             String binaryValue = null;
             String defaultTTL = null;
             String transcoderValue = null;
-            if (!options.isNil()) {
+            if (!options.isEmpty()) {
               RubyHash opts = options.convertToHash();
               if (opts.containsKey(ruby.newSymbol("distribution"))) {
                 distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
