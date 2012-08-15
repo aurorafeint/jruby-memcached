@@ -1,6 +1,8 @@
 package com.openfeint.memcached;
 
 import com.openfeint.memcached.error.Error;
+import com.openfeint.memcached.transcoder.MarshalTranscoder;
+import com.openfeint.memcached.transcoder.MarshalZlibTranscoder;
 import net.spy.memcached.AddrUtil;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.ConnectionFactoryBuilder.Locator;

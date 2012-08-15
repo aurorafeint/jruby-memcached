@@ -1,4 +1,4 @@
-package com.openfeint.memcached;
+package com.openfeint.memcached.transcoder;
 
 import com.jcraft.jzlib.ZOutputStream;
 import com.jcraft.jzlib.ZInputStream;

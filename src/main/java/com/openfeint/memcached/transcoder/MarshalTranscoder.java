@@ -1,4 +1,4 @@
-package com.openfeint.memcached;
+package com.openfeint.memcached.transcoder;
 
 import net.spy.memcached.CachedData;
 import net.spy.memcached.transcoders.Transcoder;
