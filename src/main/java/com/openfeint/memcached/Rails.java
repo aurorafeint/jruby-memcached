@@ -192,6 +192,16 @@ public class Rails extends Memcached {
         return super.flush(context);
     }
 
+    @JRubyMethod(name = "read_multi", rest = true)
+    public IRubyObject readMulti(ThreadContext context, IRubyObject[] args) {
+        Ruby ruby = context.getRuntime();
+        if (args.length == 0) {
+            return new RubyHash(ruby);
+        } else {
+            return getMulti(context, args);
+        }
+    }
+
     private RubyFixnum getTTL(ThreadContext context, IRubyObject[] args, int index) {
         Ruby ruby = context.getRuntime();
         if (args.length > index) {

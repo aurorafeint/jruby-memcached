@@ -50,6 +50,24 @@ describe Memcached::Rails do
       end
     end
 
+    context "get_multi" do
+      it "should get hash containing multiple key/value pairs" do
+        @memcached.set "key1", "value1"
+        @memcached.set "key2", "value2"
+        @memcached.get(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+      end
+
+      it "should get hash containing nil value" do
+        @memcached.set "key", nil, 0
+        @memcached.get(["key"]).should == {"key" => nil}
+      end
+
+      it "should get empty hash" do
+        @memcached.delete "key" rescue nil
+        @memcached.get(["key"]).should be_empty
+      end
+    end
+
     context "set" do
       it "should set successfully" do
         @memcached.set("key", "value").should be_true
@@ -132,6 +150,18 @@ describe Memcached::Rails do
 
       it "should respond_to? :[]=" do
         @memcached.should be_respond_to(:"[]=")
+      end
+    end
+
+    context "read_multi" do
+      it "should read hash containing multiple key/value pairs" do
+        @memcached.write "key1", "value1"
+        @memcached.write "key2", "value2"
+        @memcached.read_multi(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+      end
+
+      it "should read empty hash without params" do
+        @memcached.read_multi.should be_empty
       end
     end
   end
