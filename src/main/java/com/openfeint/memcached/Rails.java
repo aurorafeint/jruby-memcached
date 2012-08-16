@@ -66,7 +66,7 @@ public class Rails extends Memcached {
         return ruby.getTrue();
     }
 
-    @JRubyMethod(name = "get", required = 1, optional = 1)
+    @JRubyMethod(name = { "get", "[]" }, required = 1, optional = 1)
     public IRubyObject get(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
         IRubyObject key = args[0];
@@ -109,7 +109,7 @@ public class Rails extends Memcached {
         return super.get(context, new IRubyObject[] { keys, notRaw });
     }
 
-    @JRubyMethod(name = "set", required = 2, optional = 2)
+    @JRubyMethod(name = { "set", "[]=" }, required = 2, optional = 2)
     public IRubyObject set(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
         IRubyObject key = args[0];

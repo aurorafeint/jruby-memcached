@@ -116,5 +116,23 @@ describe Memcached::Rails do
         @memcached.get("key").should be_nil
       end
     end
+
+    context "alias" do
+      it "should respond_to? flush_all" do
+        @memcached.should be_respond_to(:flush_all)
+      end
+
+      it "should respond_to? clear" do
+        @memcached.should be_respond_to(:clear)
+      end
+
+      it "should respond_to? :[]" do
+        @memcached.should be_respond_to(:"[]")
+      end
+
+      it "should respond_to? :[]=" do
+        @memcached.should be_respond_to(:"[]=")
+      end
+    end
   end
 end
