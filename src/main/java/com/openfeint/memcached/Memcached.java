@@ -135,24 +135,26 @@ public class Memcached extends RubyObject {
         }
     }
 
-    @JRubyMethod
-    public IRubyObject get(ThreadContext context, IRubyObject key) {
-        IRubyObject value = client.get(getFullKey(key.toString()), transcoder);
-        if (value == null) {
-          throw Error.newNotFound(getRuntime(), "not found");
-        }
-        return value;
-    }
+    @JRubyMethod(name = "get")
+    public IRubyObject get(ThreadContext context, IRubyObject keys) {
+        if (keys instanceof RubyString) {
+            IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
+            if (value == null) {
+                throw Error.newNotFound(getRuntime(), "not found");
+            }
+            return value;
+        } else if (keys instanceof RubyArray) {
+            RubyHash results = RubyHash.newHash(getRuntime());
 
-    @JRubyMethod
-    public IRubyObject multiget(ThreadContext context, IRubyObject keys) {
-        RubyHash results = RubyHash.newHash(getRuntime());
-
-        Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
-        for (String key : (List<String>) keys.convertToArray()) {
-            results.put(key, bulkResults.get(getFullKey(key)));
+            Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
+            for (String key : (List<String>) keys.convertToArray()) {
+                if (bulkResults.containsKey(getFullKey(key))) {
+                    results.put(key, bulkResults.get(getFullKey(key)));
+                }
+            }
+            return results;
         }
-        return results;
+        return context.nil;
     }
 
     @JRubyMethod(name = "incr", required = 1, optional = 2)
@@ -299,7 +301,7 @@ public class Memcached extends RubyObject {
 
     private int getTimeout(IRubyObject[] args) {
         if (args.length > 2) {
-          return (int) args[2].convertToInteger().getLongValue();
+            return (int) args[2].convertToInteger().getLongValue();
         }
         return ttl;
     }

@@ -49,23 +49,23 @@ describe Memcached do
         @memcached.delete "key" rescue nil
         lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
       end
-    end
 
-    context "multiget" do
-      it "should get hash containing multiple key/value pairs" do
-        @memcached.set "key1", "value1"
-        @memcached.set "key2", "value2"
-        @memcached.multiget(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
-      end
+      context "multiget" do
+        it "should get hash containing multiple key/value pairs" do
+          @memcached.set "key1", "value1"
+          @memcached.set "key2", "value2"
+          @memcached.get(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+        end
 
-      it "should get hash containing nil value" do
-        @memcached.set "key", nil, 0
-        @memcached.multiget(["key"]).should == {"key" => nil}
-      end
+        it "should get hash containing nil value" do
+          @memcached.set "key", nil, 0
+          @memcached.get(["key"]).should == {"key" => nil}
+        end
 
-      it "should get empty hash" do
-        @memcached.delete "key" rescue nil
-        @memcached.multiget(["key"]).should be_empty
+        it "should get empty hash" do
+          @memcached.delete "key" rescue nil
+          @memcached.get(["key"]).should be_empty
+        end
       end
     end
 
@@ -181,10 +181,10 @@ describe Memcached do
           lambda { @memcached.get("jrubykey") }.should raise_error(Memcached::NotFound)
         end
 
-        it "should multiget with prefix_key", :focus => true do
+        it "should multiget with prefix_key" do
           @prefix_memcached.set "key1", "value1"
           @prefix_memcached.set "key2", "value2"
-          @prefix_memcached.multiget(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+          @prefix_memcached.get(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
         end
       end
     end
