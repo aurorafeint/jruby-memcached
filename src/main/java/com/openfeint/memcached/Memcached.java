@@ -216,7 +216,7 @@ public class Memcached extends RubyObject {
         return results;
     }
 
-    @JRubyMethod
+    @JRubyMethod(name = {"quit", "shutdown"})
     public IRubyObject shutdown(ThreadContext context) {
         client.shutdown();
 
