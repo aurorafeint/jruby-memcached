@@ -35,6 +35,11 @@ You can get multiple values at once:
     $cache.get ['test', 'test2', 'missing']
       #=> {"test" => "hello", "test2" => "hello"}
 
+## Rails
+
+  # config/environment.rb
+  config.cache_store = Memcached::Rails.new(:servers => ['127.0.0.1'])
+
 ## Benchmarks
 
 memcached.gem is the fastest memcached gem in MRI,
