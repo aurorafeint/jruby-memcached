@@ -20,8 +20,12 @@ import java.util.List;
 
 @JRubyClass(name = "Memcached::Rails", parent = "Memcached")
 public class Rails extends Memcached {
+    private boolean stringReturnTypes;
+
     public Rails(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
+
+        stringReturnTypes = false;
     }
 
     @JRubyMethod(name = "initialize", rest = true)
@@ -46,6 +50,9 @@ public class Rails extends Memcached {
         }
         if (opts.containsKey(ruby.newSymbol("namespace_separator"))) {
             opts.put(ruby.newSymbol("prefix_delimiter"), opts.get(ruby.newSymbol("namespace_separator")));
+        }
+        if (opts.containsKey(ruby.newSymbol("string_return_types"))) {
+            stringReturnTypes = true;
         }
         return super.init(context, servers, opts);
     }
@@ -143,6 +150,32 @@ public class Rails extends Memcached {
             write(context, new IRubyObject[] { key, value, options });
         }
         return value;
+    }
+
+    @JRubyMethod(name = "add", required = 2, optional = 2)
+    public IRubyObject add(ThreadContext context, IRubyObject[] args) {
+        Ruby ruby = context.getRuntime();
+        if (args.length > 3) {
+            if (ruby.getTrue() == args[3]) {
+                args[3] = ruby.getFalse();
+            } else {
+                args[3] = ruby.getTrue();
+            }
+        }
+        try {
+            super.add(context, args);
+            if (stringReturnTypes) {
+                return ruby.newString("STORED\r\n");
+            } else {
+                return ruby.getTrue();
+            }
+        } catch (RaiseException e) {
+            if (stringReturnTypes) {
+                return ruby.newString("NOT STORED\r\n");
+            } else {
+                return ruby.getFalse();
+            }
+        }
     }
 
     private RubyFixnum getTTL(ThreadContext context, IRubyObject[] args, int index) {

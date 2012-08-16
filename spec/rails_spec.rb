@@ -75,5 +75,32 @@ describe Memcached::Rails do
         @memcached.fetch("key") { "new value" }.should == "new value"
       end
     end
+
+    context "add" do
+      it "should add if key is missing" do
+        @memcached.delete "key" rescue nil
+        @memcached.add("key", "value").should be_true
+      end
+
+      it "should do nothing if key exists" do
+        @memcached.set "key", "value"
+        @memcached.add("key", "value").should be_false
+      end
+
+      context "with string_return_types" do
+        before(:all) { @string_memcached = Memcached::Rails.new("127.0.0.1:11211", :string_return_types => true) }
+        after(:all) { @string_memcached.quit }
+
+        it "should add if key is missing" do
+          @string_memcached.delete "key" rescue nil
+          @string_memcached.add("key", "value").should == "STORED\r\n"
+        end
+
+        it "should do nothing if key exists" do
+          @string_memcached.set "key", "value"
+          @string_memcached.add("key", "value").should == "NOT STORED\r\n"
+        end
+      end
+    end
   end
 end
