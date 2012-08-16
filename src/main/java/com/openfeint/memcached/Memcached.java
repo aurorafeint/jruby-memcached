@@ -64,83 +64,11 @@ public class Memcached extends RubyObject {
             } else if (args[0] instanceof RubyArray) {
                 servers.addAll((List<String>) args[0].convertToArray());
             }
-        } else {
+        }
+        if (servers.isEmpty()) {
             servers.add("127.0.0.1:11211");
         }
-        List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);
-        try {
-            ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
-
-            String distributionValue = "ketama";
-            String hashValue = "fnv1_32";
-            String binaryValue = "false";
-            String transcoderValue = null;
-            if (!options.isEmpty()) {
-                RubyHash opts = options.convertToHash();
-                if (opts.containsKey(ruby.newSymbol("distribution"))) {
-                    distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
-                }
-                if (opts.containsKey(ruby.newSymbol("hash"))) {
-                    hashValue = opts.get(ruby.newSymbol("hash")).toString();
-                }
-                if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
-                    binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
-                }
-                if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
-                    ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
-                }
-                if (opts.containsKey(ruby.newSymbol("namespace"))) {
-                    prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
-                }
-                if (opts.containsKey(ruby.newSymbol("prefix_key"))) {
-                    prefixKey = opts.get(ruby.newSymbol("prefix_key")).toString();
-                }
-                if (opts.containsKey(ruby.newSymbol("transcoder"))) {
-                    transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
-                }
-            }
-
-            if ("array_mod".equals(distributionValue)) {
-                builder.setLocatorType(Locator.ARRAY_MOD);
-            } else if ("ketama".equals(distributionValue) || "consistent_ketama".equals(distributionValue)) {
-                builder.setLocatorType(Locator.CONSISTENT);
-            } else {
-                throw Error.newNotSupport(ruby, "distribution not support");
-            }
-            if ("native".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.NATIVE_HASH);
-            } else if ("crc".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.CRC_HASH);
-            } else if ("fnv1_64".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.FNV1_64_HASH);
-            } else if ("fnv1a_64".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.FNV1A_64_HASH);
-            } else if ("fnv1_32".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.FNV1_32_HASH);
-            } else if ("fnv1a_32".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.FNV1A_32_HASH);
-            } else if ("ketama".equals(hashValue)) {
-                builder.setHashAlg(DefaultHashAlgorithm.KETAMA_HASH);
-            } else {
-                throw Error.newNotSupport(ruby, "hash not support");
-            }
-
-            if ("true".equals(binaryValue)) {
-                builder.setProtocol(Protocol.BINARY);
-            }
-
-            client = new MemcachedClient(builder.build(), addresses);
-
-            if ("marshal_zlib".equals(transcoderValue)) {
-              transcoder = new MarshalZlibTranscoder(ruby);
-            } else {
-              transcoder = new MarshalTranscoder(ruby);
-            }
-        } catch (IOException ioe) {
-            throw context.runtime.newIOErrorFromException(ioe);
-        }
-
-        return context.nil;
+        return init(context, servers, options);
     }
 
     @JRubyMethod
@@ -291,6 +219,83 @@ public class Memcached extends RubyObject {
     @JRubyMethod
     public IRubyObject shutdown(ThreadContext context) {
         client.shutdown();
+
+        return context.nil;
+    }
+
+    protected IRubyObject init(ThreadContext context, List<String> servers, RubyHash options) {
+        List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);
+        try {
+            ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
+
+            String distributionValue = "ketama";
+            String hashValue = "fnv1_32";
+            String binaryValue = "false";
+            String transcoderValue = null;
+            if (!options.isEmpty()) {
+                RubyHash opts = options.convertToHash();
+                if (opts.containsKey(ruby.newSymbol("distribution"))) {
+                    distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("hash"))) {
+                    hashValue = opts.get(ruby.newSymbol("hash")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
+                    binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
+                    ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
+                }
+                if (opts.containsKey(ruby.newSymbol("namespace"))) {
+                    prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("prefix_key"))) {
+                    prefixKey = opts.get(ruby.newSymbol("prefix_key")).toString();
+                }
+                if (opts.containsKey(ruby.newSymbol("transcoder"))) {
+                    transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
+                }
+            }
+
+            if ("array_mod".equals(distributionValue)) {
+                builder.setLocatorType(Locator.ARRAY_MOD);
+            } else if ("ketama".equals(distributionValue) || "consistent_ketama".equals(distributionValue)) {
+                builder.setLocatorType(Locator.CONSISTENT);
+            } else {
+                throw Error.newNotSupport(ruby, "distribution not support");
+            }
+            if ("native".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.NATIVE_HASH);
+            } else if ("crc".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.CRC_HASH);
+            } else if ("fnv1_64".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.FNV1_64_HASH);
+            } else if ("fnv1a_64".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.FNV1A_64_HASH);
+            } else if ("fnv1_32".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.FNV1_32_HASH);
+            } else if ("fnv1a_32".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.FNV1A_32_HASH);
+            } else if ("ketama".equals(hashValue)) {
+                builder.setHashAlg(DefaultHashAlgorithm.KETAMA_HASH);
+            } else {
+                throw Error.newNotSupport(ruby, "hash not support");
+            }
+
+            if ("true".equals(binaryValue)) {
+                builder.setProtocol(Protocol.BINARY);
+            }
+
+            client = new MemcachedClient(builder.build(), addresses);
+
+            if ("marshal_zlib".equals(transcoderValue)) {
+              transcoder = new MarshalZlibTranscoder(ruby);
+            } else {
+              transcoder = new MarshalTranscoder(ruby);
+            }
+        } catch (IOException ioe) {
+            throw context.runtime.newIOErrorFromException(ioe);
+        }
 
         return context.nil;
     }
