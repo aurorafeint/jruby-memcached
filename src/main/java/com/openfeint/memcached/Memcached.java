@@ -12,6 +12,7 @@ import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
+import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyHash;
 import org.jruby.RubyObject;
@@ -242,7 +243,7 @@ public class Memcached extends RubyObject {
 
             String distributionValue = "ketama";
             String hashValue = "fnv1_32";
-            String binaryValue = "false";
+            RubyBoolean binaryValue = ruby.getFalse();
             String transcoderValue = null;
             if (!options.isEmpty()) {
                 RubyHash opts = options.convertToHash();
@@ -253,7 +254,7 @@ public class Memcached extends RubyObject {
                     hashValue = opts.get(ruby.newSymbol("hash")).toString();
                 }
                 if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
-                    binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
+                    binaryValue = (RubyBoolean) opts.get(ruby.newSymbol("binary_protocol"));
                 }
                 if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
                     ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
@@ -294,7 +295,7 @@ public class Memcached extends RubyObject {
                 throw Error.newNotSupport(ruby, "hash not support");
             }
 
-            if ("true".equals(binaryValue)) {
+            if (ruby.getTrue() == binaryValue) {
                 builder.setProtocol(Protocol.BINARY);
             }
 
