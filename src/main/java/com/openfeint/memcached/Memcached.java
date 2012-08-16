@@ -135,8 +135,9 @@ public class Memcached extends RubyObject {
         }
     }
 
-    @JRubyMethod(name = "get")
-    public IRubyObject get(ThreadContext context, IRubyObject keys) {
+    @JRubyMethod(name = "get", required = 1, optional = 1)
+    public IRubyObject get(ThreadContext context, IRubyObject[] args) {
+        IRubyObject keys = args[0];
         if (keys instanceof RubyString) {
             IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
             if (value == null) {
