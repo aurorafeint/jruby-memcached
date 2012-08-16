@@ -45,6 +45,10 @@ public class Rails extends Memcached {
                 servers.addAll((List<String>) arg.convertToArray());
             }
         }
+        if (servers.isEmpty()) {
+            IRubyObject serverNames = (IRubyObject) opts.get(ruby.newSymbol("servers"));
+            servers.addAll((List<String>) serverNames.convertToArray());
+        }
         if (opts.containsKey(ruby.newSymbol("namespace"))) {
             opts.put(ruby.newSymbol("prefix_key"), opts.get(ruby.newSymbol("namespace")));
         }
