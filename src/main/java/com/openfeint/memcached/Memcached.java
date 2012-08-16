@@ -303,6 +303,7 @@ public class Memcached extends RubyObject {
                 builder.setProtocol(Protocol.BINARY);
             }
 
+            builder.setDaemon(true);
             client = new MemcachedClient(builder.build(), addresses);
 
             if ("marshal_zlib".equals(transcoderValue)) {
