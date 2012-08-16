@@ -31,8 +31,6 @@ import java.util.concurrent.ExecutionException;
 
 @JRubyClass(name = "Memcached")
 public class Memcached extends RubyObject {
-    private Ruby ruby;
-
     private MemcachedClient client;
 
     private Transcoder<IRubyObject> transcoder;
@@ -43,7 +41,6 @@ public class Memcached extends RubyObject {
 
     public Memcached(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
-        this.ruby = ruby;
 
         ttl = 604800;
         prefixKey = "";
@@ -55,7 +52,7 @@ public class Memcached extends RubyObject {
         if (args.length > 1) {
             options = args[1].convertToHash();
         } else {
-            options = new RubyHash(ruby);
+            options = new RubyHash(getRuntime());
         }
         List<String> servers = new ArrayList<String>();
         if (args.length > 0) {
@@ -79,9 +76,9 @@ public class Memcached extends RubyObject {
             if (addressStr.indexOf("/") == 0) {
                 addressStr = addressStr.replace("/", "");
             }
-            addresses.add(ruby.newString(addressStr));
+            addresses.add(getRuntime().newString(addressStr));
         }
-        return ruby.newArray(addresses);
+        return getRuntime().newArray(addresses);
     }
 
     @JRubyMethod(name = "add", required = 2, optional = 3)
@@ -92,7 +89,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.add(key, timeout, value, transcoder).get();
             if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+                throw Error.newNotStored(getRuntime(), "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -110,7 +107,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.replace(key, timeout, value, transcoder).get();
             if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+                throw Error.newNotStored(getRuntime(), "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -128,7 +125,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.set(key, timeout, value, transcoder).get();
             if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+                throw Error.newNotStored(getRuntime(), "not stored");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -142,18 +139,18 @@ public class Memcached extends RubyObject {
     public IRubyObject get(ThreadContext context, IRubyObject key) {
         IRubyObject value = client.get(getFullKey(key), transcoder);
         if (value == null) {
-          throw Error.newNotFound(ruby, "not found");
+          throw Error.newNotFound(getRuntime(), "not found");
         }
         return value;
     }
 
     @JRubyMethod
     public IRubyObject multiget(ThreadContext context, IRubyObject keys) {
-        RubyHash results = RubyHash.newHash(ruby);
+        RubyHash results = RubyHash.newHash(getRuntime());
 
         Map<String, IRubyObject> bulkResults = client.getBulk(keys.convertToArray(), transcoder);
         for (Map.Entry<String, IRubyObject> entry : bulkResults.entrySet()) {
-            results.op_aset(context, ruby.newString(entry.getKey()), entry.getValue());
+            results.op_aset(context, getRuntime().newString(entry.getKey()), entry.getValue());
         }
         return results;
     }
@@ -164,7 +161,7 @@ public class Memcached extends RubyObject {
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
         long result = client.incr(key, by, 1, timeout);
-        return ruby.newFixnum(result);
+        return getRuntime().newFixnum(result);
     }
 
     @JRubyMethod(name = "decr", required = 1, optional = 2)
@@ -173,7 +170,7 @@ public class Memcached extends RubyObject {
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
         long result = client.decr(key, by, 0, timeout);
-        return ruby.newFixnum(result);
+        return getRuntime().newFixnum(result);
     }
 
     @JRubyMethod
@@ -181,7 +178,7 @@ public class Memcached extends RubyObject {
         try {
             boolean result = client.delete(getFullKey(key)).get();
             if (result == false) {
-                throw Error.newNotFound(ruby, "not found");
+                throw Error.newNotFound(getRuntime(), "not found");
             }
             return context.nil;
         } catch (ExecutionException ee) {
@@ -205,13 +202,13 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod
     public IRubyObject stats(ThreadContext context) {
-        RubyHash results = RubyHash.newHash(ruby);
+        RubyHash results = RubyHash.newHash(getRuntime());
         for(Map.Entry<SocketAddress, Map<String, String>> entry : client.getStats().entrySet()) {
-            RubyHash serverHash = RubyHash.newHash(ruby);
+            RubyHash serverHash = RubyHash.newHash(getRuntime());
             for(Map.Entry<String, String> server : entry.getValue().entrySet()) {
-                serverHash.op_aset(context, ruby.newString(server.getKey()), ruby.newString(server.getValue()));
+                serverHash.op_aset(context, getRuntime().newString(server.getKey()), getRuntime().newString(server.getValue()));
             }
-            results.op_aset(context, ruby.newString(entry.getKey().toString()), serverHash);
+            results.op_aset(context, getRuntime().newString(entry.getKey().toString()), serverHash);
         }
         return results;
     }
@@ -234,26 +231,26 @@ public class Memcached extends RubyObject {
             String transcoderValue = null;
             if (!options.isEmpty()) {
                 RubyHash opts = options.convertToHash();
-                if (opts.containsKey(ruby.newSymbol("distribution"))) {
-                    distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("distribution"))) {
+                    distributionValue = opts.get(getRuntime().newSymbol("distribution")).toString();
                 }
-                if (opts.containsKey(ruby.newSymbol("hash"))) {
-                    hashValue = opts.get(ruby.newSymbol("hash")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("hash"))) {
+                    hashValue = opts.get(getRuntime().newSymbol("hash")).toString();
                 }
-                if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
-                    binaryValue = opts.get(ruby.newSymbol("binary_protocol")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("binary_protocol"))) {
+                    binaryValue = opts.get(getRuntime().newSymbol("binary_protocol")).toString();
                 }
-                if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
-                    ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
+                if (opts.containsKey(getRuntime().newSymbol("default_ttl"))) {
+                    ttl = Integer.parseInt(opts.get(getRuntime().newSymbol("default_ttl")).toString());
                 }
-                if (opts.containsKey(ruby.newSymbol("namespace"))) {
-                    prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("namespace"))) {
+                    prefixKey = opts.get(getRuntime().newSymbol("namespace")).toString();
                 }
-                if (opts.containsKey(ruby.newSymbol("prefix_key"))) {
-                    prefixKey = opts.get(ruby.newSymbol("prefix_key")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("prefix_key"))) {
+                    prefixKey = opts.get(getRuntime().newSymbol("prefix_key")).toString();
                 }
-                if (opts.containsKey(ruby.newSymbol("transcoder"))) {
-                    transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
+                if (opts.containsKey(getRuntime().newSymbol("transcoder"))) {
+                    transcoderValue = opts.get(getRuntime().newSymbol("transcoder")).toString();
                 }
             }
 
@@ -262,7 +259,7 @@ public class Memcached extends RubyObject {
             } else if ("ketama".equals(distributionValue) || "consistent_ketama".equals(distributionValue)) {
                 builder.setLocatorType(Locator.CONSISTENT);
             } else {
-                throw Error.newNotSupport(ruby, "distribution not support");
+                throw Error.newNotSupport(getRuntime(), "distribution not support");
             }
             if ("native".equals(hashValue)) {
                 builder.setHashAlg(DefaultHashAlgorithm.NATIVE_HASH);
@@ -279,7 +276,7 @@ public class Memcached extends RubyObject {
             } else if ("ketama".equals(hashValue)) {
                 builder.setHashAlg(DefaultHashAlgorithm.KETAMA_HASH);
             } else {
-                throw Error.newNotSupport(ruby, "hash not support");
+                throw Error.newNotSupport(getRuntime(), "hash not support");
             }
 
             if ("true".equals(binaryValue)) {
@@ -289,9 +286,9 @@ public class Memcached extends RubyObject {
             client = new MemcachedClient(builder.build(), addresses);
 
             if ("marshal_zlib".equals(transcoderValue)) {
-              transcoder = new MarshalZlibTranscoder(ruby);
+              transcoder = new MarshalZlibTranscoder(getRuntime());
             } else {
-              transcoder = new MarshalTranscoder(ruby);
+              transcoder = new MarshalTranscoder(getRuntime());
             }
         } catch (IOException ioe) {
             throw context.runtime.newIOErrorFromException(ioe);
