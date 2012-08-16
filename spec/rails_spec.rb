@@ -9,5 +9,9 @@ describe Memcached::Rails do
       @memcached.set "foo", "bar"
       @memcached.servers.should == ["127.0.0.1:11211"]
     end
+
+    it "should be active" do
+      @memcached.should be_active
+    end
   end
 end

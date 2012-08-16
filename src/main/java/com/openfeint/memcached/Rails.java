@@ -2,6 +2,7 @@ package com.openfeint.memcached;
 
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
+import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyHash;
 import org.jruby.RubyObject;
@@ -15,12 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JRubyClass(name = "Memcached::Rails", parent = "Memcached")
-class Rails extends Memcached {
+public class Rails extends Memcached {
     public Rails(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
     }
 
-    @JRubyMethod(name = "initialize")
+    @JRubyMethod(name = "initialize", rest = true)
     public IRubyObject initialize(ThreadContext context, IRubyObject[] args) {
         RubyHash opts;
         if (args[args.length - 1] instanceof RubyHash) {
@@ -42,6 +43,14 @@ class Rails extends Memcached {
         if (opts.containsKey(getRuntime().newSymbol("namespace_separator"))) {
             opts.put(getRuntime().newSymbol("prefix_delimiter"), opts.get(getRuntime().newSymbol("namespace_separator")));
         }
-        return init(context, servers, opts);
+        return super.init(context, servers, opts);
+    }
+
+    @JRubyMethod(name = "active?")
+    public IRubyObject active_p(ThreadContext context) {
+        if (((RubyArray) super.servers(context)).isEmpty()) {
+          return getRuntime().getFalse();
+        }
+        return getRuntime().getTrue();
     }
 }

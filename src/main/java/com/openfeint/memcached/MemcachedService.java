@@ -16,7 +16,13 @@ public class MemcachedService implements BasicLibraryService {
             }
         });
         memcached.defineAnnotatedMethods(Memcached.class);
-        memcached.defineClassUnder("Rails", memcached, memcached.getAllocator());
+
+        RubyClass rails = memcached.defineClassUnder("Rails", memcached, new ObjectAllocator() {
+            public IRubyObject allocate(Ruby ruby, RubyClass klazz) {
+                return new Rails(ruby, klazz);
+            }
+        });
+        rails.defineAnnotatedMethods(Rails.class);
 
         RubyClass runtimeError = ruby.getRuntimeError();
         RubyClass memcachedError = memcached.defineClassUnder("Error", runtimeError, runtimeError.getAllocator());
