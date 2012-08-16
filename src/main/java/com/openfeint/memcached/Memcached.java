@@ -235,6 +235,10 @@ public class Memcached extends RubyObject {
         return context.nil;
     }
 
+    protected int getDefaultTTL() {
+        return ttl;
+    }
+
     protected IRubyObject init(ThreadContext context, List<String> servers, RubyHash options) {
         Ruby ruby = context.getRuntime();
         List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);

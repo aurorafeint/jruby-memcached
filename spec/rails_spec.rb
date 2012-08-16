@@ -49,5 +49,31 @@ describe Memcached::Rails do
         @memcached.exist?("key").should be_false
       end
     end
+
+    context "set" do
+      it "should set successfully" do
+        @memcached.set("key", "value").should be_true
+        @memcached.get("key").should == "value"
+      end
+    end
+
+    context "write" do
+      it "should write successfully" do
+        @memcached.write("key", "value").should be_true
+        @memcached.read("key").should == "value"
+      end
+    end
+
+    context "fetch" do
+      it "should read if key exists" do
+        @memcached.write("key", "value")
+        @memcached.fetch("key") { "new value" }.should == "value"
+      end
+
+      it "should write if key is missing" do
+        @memcached.delete "key" rescue nil
+        @memcached.fetch("key") { "new value" }.should == "new value"
+      end
+    end
   end
 end
