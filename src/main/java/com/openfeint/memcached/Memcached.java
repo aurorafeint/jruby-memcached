@@ -83,7 +83,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "add", required = 2, optional = 3)
     public IRubyObject add(ThreadContext context, IRubyObject[] args) {
-        String key = getFullKey(args[0]);
+        String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
@@ -101,7 +101,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "replace", required = 2, optional = 3)
     public IRubyObject replace(ThreadContext context, IRubyObject [] args) {
-        String key = getFullKey(args[0]);
+        String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
@@ -119,7 +119,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "set", required = 2, optional = 3)
     public IRubyObject set(ThreadContext context, IRubyObject[] args) {
-        String key = getFullKey(args[0]);
+        String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
         int timeout = getTimeout(args);
         try {
@@ -137,7 +137,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod
     public IRubyObject get(ThreadContext context, IRubyObject key) {
-        IRubyObject value = client.get(getFullKey(key), transcoder);
+        IRubyObject value = client.get(getFullKey(key.toString()), transcoder);
         if (value == null) {
           throw Error.newNotFound(getRuntime(), "not found");
         }
@@ -148,16 +148,16 @@ public class Memcached extends RubyObject {
     public IRubyObject multiget(ThreadContext context, IRubyObject keys) {
         RubyHash results = RubyHash.newHash(getRuntime());
 
-        Map<String, IRubyObject> bulkResults = client.getBulk(keys.convertToArray(), transcoder);
-        for (Map.Entry<String, IRubyObject> entry : bulkResults.entrySet()) {
-            results.op_aset(context, getRuntime().newString(entry.getKey()), entry.getValue());
+        Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
+        for (String key : (List<String>) keys.convertToArray()) {
+            results.put(key, bulkResults.get(getFullKey(key)));
         }
         return results;
     }
 
     @JRubyMethod(name = "incr", required = 1, optional = 2)
     public IRubyObject incr(ThreadContext context, IRubyObject[] args) {
-        String key = getFullKey(args[0]);
+        String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
         long result = client.incr(key, by, 1, timeout);
@@ -166,7 +166,7 @@ public class Memcached extends RubyObject {
 
     @JRubyMethod(name = "decr", required = 1, optional = 2)
     public IRubyObject decr(ThreadContext context, IRubyObject[] args) {
-        String key = getFullKey(args[0]);
+        String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
         int timeout = getTimeout(args);
         long result = client.decr(key, by, 0, timeout);
@@ -176,7 +176,7 @@ public class Memcached extends RubyObject {
     @JRubyMethod
     public IRubyObject delete(ThreadContext context, IRubyObject key) {
         try {
-            boolean result = client.delete(getFullKey(key)).get();
+            boolean result = client.delete(getFullKey(key.toString())).get();
             if (result == false) {
                 throw Error.newNotFound(getRuntime(), "not found");
             }
@@ -311,7 +311,15 @@ public class Memcached extends RubyObject {
         return 1;
     }
 
-    private String getFullKey(IRubyObject key) {
-        return prefixKey + key.toString();
+    private List<String> getFullKeys(List<String> keys) {
+        List<String> fullKeys = new ArrayList<String>();
+        for (String key : keys) {
+            fullKeys.add(getFullKey(key));
+        }
+        return fullKeys;
+    }
+
+    private String getFullKey(String key) {
+        return prefixKey + key;
     }
 }

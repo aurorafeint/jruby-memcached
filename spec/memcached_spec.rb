@@ -27,17 +27,15 @@ describe Memcached do
       end
     end
 
-    context "set/get/multiget" do
+    context "set/get" do
       it "should set/get with plain text" do
         @memcached.set "key", "value"
         @memcached.get("key").should == "value"
-        @memcached.multiget(["key"]).should == {"key" => "value"}
       end
 
       it "should set/get with compressed text" do
         @memcached.set "key", "x\234c?P?*?/?I\001\000\b8\002a"
         @memcached.get("key").should == "x\234c?P?*?/?I\001\000\b8\002a"
-        @memcached.multiget(["key"]).should == {"key" => "x\234c?P?*?/?I\001\000\b8\002a"}
       end
     end
 
@@ -54,6 +52,12 @@ describe Memcached do
     end
 
     context "multiget" do
+      it "should get hash containing multiple key/value pairs" do
+        @memcached.set "key1", "value1"
+        @memcached.set "key2", "value2"
+        @memcached.multiget(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+      end
+
       it "should get hash containing nil value" do
         @memcached.set "key", nil, 0
         @memcached.multiget(["key"]).should == {"key" => nil}
@@ -175,6 +179,12 @@ describe Memcached do
           @prefix_memcached.set "key", "value"
           @prefix_memcached.delete "key"
           lambda { @memcached.get("jrubykey") }.should raise_error(Memcached::NotFound)
+        end
+
+        it "should multiget with prefix_key", :focus => true do
+          @prefix_memcached.set "key1", "value1"
+          @prefix_memcached.set "key2", "value2"
+          @prefix_memcached.multiget(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
         end
       end
     end
