@@ -14,7 +14,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 import java.util.ArrayList;
 import java.util.List;
 
-@JRubyClass(name = "Memcached::Rails")
+@JRubyClass(name = "Memcached::Rails", parent = "Memcached")
 class Rails extends Memcached {
     public Rails(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
