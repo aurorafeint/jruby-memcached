@@ -10,6 +10,12 @@ describe Memcached::Rails do
       @memcached.servers.should == ["127.0.0.1:11211"]
     end
 
+    it "should get logger" do
+      require 'logger'
+      @memcached.logger = Logger.new(STDOUT)
+      @memcached.logger.should_not be_nil
+    end
+
     it "should be active" do
       @memcached.should be_active
     end
