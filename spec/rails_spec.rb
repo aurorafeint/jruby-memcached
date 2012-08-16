@@ -102,5 +102,19 @@ describe Memcached::Rails do
         end
       end
     end
+
+    context "delete" do
+      it "should delete existing key" do
+        @memcached.set "key", "value"
+        @memcached.delete "key"
+        @memcached.get("key").should be_nil
+      end
+
+      it "should do nothing if delete missing key" do
+        @memcached.delete "key" rescue nil
+        @memcached.delete "key"
+        @memcached.get("key").should be_nil
+      end
+    end
   end
 end

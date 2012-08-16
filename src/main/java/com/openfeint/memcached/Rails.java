@@ -178,6 +178,20 @@ public class Rails extends Memcached {
         }
     }
 
+    @JRubyMethod(name = "delete", required = 1, optional = 1)
+    public IRubyObject delete(ThreadContext context, IRubyObject[] args) {
+        try {
+            super.delete(context, args[0]);
+        } catch(RaiseException e) { }
+
+        return context.nil;
+    }
+
+    @JRubyMethod(name = { "flush", "flush_all", "clear" })
+    public IRubyObject flush(ThreadContext context) {
+        return super.flush(context);
+    }
+
     private RubyFixnum getTTL(ThreadContext context, IRubyObject[] args, int index) {
         Ruby ruby = context.getRuntime();
         if (args.length > index) {
