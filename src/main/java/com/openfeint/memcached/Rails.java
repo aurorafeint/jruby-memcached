@@ -214,9 +214,11 @@ public class Rails extends Memcached {
             } else if (args[index] instanceof RubyHash) {
                 RubyHash options = (RubyHash) args[index];
                 if (options.containsKey(ruby.newSymbol("ttl"))) {
-                    return (RubyFixnum) options.get(ruby.newSymbol("ttl"));
+                    Long ttl = (Long) options.get(ruby.newSymbol("ttl"));
+                    return ruby.newFixnum(ttl);
                 } else if (options.containsKey(ruby.newSymbol("expires_in"))) {
-                    return (RubyFixnum) options.get(ruby.newSymbol("expires_in"));
+                    Long expiresIn = (Long) options.get(ruby.newSymbol("expires_in"));
+                    return ruby.newFixnum(expiresIn);
                 }
             }
         }

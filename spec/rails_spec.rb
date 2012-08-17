@@ -86,6 +86,13 @@ describe Memcached::Rails do
         @memcached.write("key", "value").should be_true
         @memcached.read("key").should == "value"
       end
+
+      it "should expire" do
+        @memcached.write("key", "value", :expires_in => 1)
+        @memcached.read("key").should == "value"
+        sleep 1
+        @memcached.read("key").should be_nil
+      end
     end
 
     context "fetch" do
