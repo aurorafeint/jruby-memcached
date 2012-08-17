@@ -1,3 +1,9 @@
+## 0.4.1 (Aug 17, 2012)
+
+Bugfixes:
+
+  - fix ClassCastException from Long to RubyFixnum
+
 ## 0.4.0 (Aug 16, 2012)
 
 Bugfixes:
