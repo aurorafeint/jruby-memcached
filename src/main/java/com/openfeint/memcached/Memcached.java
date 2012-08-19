@@ -304,6 +304,7 @@ public class Memcached extends RubyObject {
             }
 
             builder.setDaemon(true);
+            builder.setShouldOptimize(false);
             client = new MemcachedClient(builder.build(), addresses);
 
             if ("marshal_zlib".equals(transcoderValue)) {
