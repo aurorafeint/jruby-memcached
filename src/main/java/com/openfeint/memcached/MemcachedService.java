@@ -29,6 +29,7 @@ public class MemcachedService implements BasicLibraryService {
         memcached.defineClassUnder("NotFound", memcachedError, memcachedError.getAllocator());
         memcached.defineClassUnder("NotStored", memcachedError, memcachedError.getAllocator());
         memcached.defineClassUnder("NotSupport", memcachedError, memcachedError.getAllocator());
+        memcached.defineClassUnder("ATimeoutOccurred", memcachedError, memcachedError.getAllocator());
         return true;
     }
 }

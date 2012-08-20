@@ -20,6 +20,10 @@ public class Error {
         return newMemcachedError(ruby, "NotSupport", message);
     }
 
+    public static RaiseException newATimeoutOccurred(Ruby ruby, String message) {
+        return newMemcachedError(ruby, "ATimeoutOccurred", message);
+    }
+
     private static RaiseException newMemcachedError(Ruby ruby, String klass, String message) {
         RubyClass errorClass = ruby.getModule("Memcached").getClass(klass);
         return new RaiseException(RubyException.newException(ruby, errorClass, message), true);

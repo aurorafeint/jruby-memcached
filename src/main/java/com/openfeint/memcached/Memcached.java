@@ -9,6 +9,7 @@ import net.spy.memcached.ConnectionFactoryBuilder.Locator;
 import net.spy.memcached.ConnectionFactoryBuilder.Protocol;
 import net.spy.memcached.DefaultHashAlgorithm;
 import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.OperationTimeoutException;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
 import org.jruby.RubyArray;
@@ -96,10 +97,12 @@ public class Memcached extends RubyObject {
                 throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
-        } catch (ExecutionException ee) {
-            throw ruby.newRuntimeError(ee.getLocalizedMessage());
-        } catch (InterruptedException ie) {
-            throw ruby.newThreadError(ie.getLocalizedMessage());
+        } catch (OperationTimeoutException e) {
+            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw ruby.newRuntimeError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -115,10 +118,12 @@ public class Memcached extends RubyObject {
                 throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
-        } catch (ExecutionException ee) {
-            throw ruby.newRuntimeError(ee.getLocalizedMessage());
-        } catch (InterruptedException ie) {
-            throw ruby.newThreadError(ie.getLocalizedMessage());
+        } catch (OperationTimeoutException e) {
+            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw ruby.newRuntimeError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -134,10 +139,12 @@ public class Memcached extends RubyObject {
                 throw Error.newNotStored(ruby, "not stored");
             }
             return context.nil;
-        } catch (ExecutionException ee) {
-            throw ruby.newRuntimeError(ee.getLocalizedMessage());
-        } catch (InterruptedException ie) {
-            throw ruby.newThreadError(ie.getLocalizedMessage());
+        } catch (OperationTimeoutException e) {
+            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw ruby.newRuntimeError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -194,10 +201,12 @@ public class Memcached extends RubyObject {
                 throw Error.newNotFound(ruby, "not found");
             }
             return context.nil;
-        } catch (ExecutionException ee) {
-            throw ruby.newRuntimeError(ee.getLocalizedMessage());
-        } catch (InterruptedException ie) {
-            throw ruby.newThreadError(ie.getLocalizedMessage());
+        } catch (OperationTimeoutException e) {
+            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw ruby.newRuntimeError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -207,10 +216,12 @@ public class Memcached extends RubyObject {
         try {
             client.flush().get();
             return context.nil;
-        } catch (ExecutionException ee) {
-            throw ruby.newRuntimeError(ee.getLocalizedMessage());
-        } catch (InterruptedException ie) {
-            throw ruby.newThreadError(ie.getLocalizedMessage());
+        } catch (OperationTimeoutException e) {
+            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            throw ruby.newRuntimeError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
