@@ -107,6 +107,8 @@ public class Memcached extends RubyObject {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
+            } catch (RaiseException e) {
+                throw e;
             } catch (ExecutionException e) {
                 if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
                     if (retry == exceptionRetryLimit) {
@@ -126,7 +128,7 @@ public class Memcached extends RubyObject {
                     retry++;
                     continue;
                 } else {
-                    throw e;
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
             } catch (InterruptedException e) {
                 throw ruby.newThreadError(e.getLocalizedMessage());
@@ -148,6 +150,8 @@ public class Memcached extends RubyObject {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
+            } catch (RaiseException e) {
+                throw e;
             } catch (ExecutionException e) {
                 if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
                     if (retry == exceptionRetryLimit) {
@@ -167,7 +171,7 @@ public class Memcached extends RubyObject {
                     retry++;
                     continue;
                 } else {
-                    throw e;
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
             } catch (InterruptedException e) {
                 throw ruby.newThreadError(e.getLocalizedMessage());
@@ -189,6 +193,8 @@ public class Memcached extends RubyObject {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
+            } catch (RaiseException e) {
+                throw e;
             } catch (ExecutionException e) {
                 if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
                     if (retry == exceptionRetryLimit) {
@@ -208,7 +214,7 @@ public class Memcached extends RubyObject {
                     retry++;
                     continue;
                 } else {
-                    throw e;
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
             } catch (InterruptedException e) {
                 throw ruby.newThreadError(e.getLocalizedMessage());
@@ -240,10 +246,10 @@ public class Memcached extends RubyObject {
                     }
                     return results;
                 }
-            } catch (OperationTimeoutException e) {
-                throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
             } catch (RaiseException e) {
                 throw e;
+            } catch (OperationTimeoutException e) {
+                throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
             } catch (RuntimeException e) {
                 throw ruby.newRuntimeError(e.getLocalizedMessage());
             }
@@ -282,6 +288,8 @@ public class Memcached extends RubyObject {
                     throw Error.newNotFound(ruby, "not found");
                 }
                 return context.nil;
+            } catch (RaiseException e) {
+                throw e;
             } catch (ExecutionException e) {
                 if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
                     if (retry == exceptionRetryLimit) {
@@ -301,7 +309,7 @@ public class Memcached extends RubyObject {
                     retry++;
                     continue;
                 } else {
-                    throw e;
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
             } catch (InterruptedException e) {
                 throw ruby.newThreadError(e.getLocalizedMessage());
