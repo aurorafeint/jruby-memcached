@@ -259,6 +259,7 @@ public class Memcached extends RubyObject {
             String distributionValue = "ketama";
             String hashValue = "fnv1_32";
             RubyBoolean binaryValue = ruby.getFalse();
+            RubyBoolean shouldOptimize = ruby.getFalse();
             String transcoderValue = null;
             if (!options.isEmpty()) {
                 RubyHash opts = options.convertToHash();
@@ -270,6 +271,9 @@ public class Memcached extends RubyObject {
                 }
                 if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
                     binaryValue = (RubyBoolean) opts.get(ruby.newSymbol("binary_protocol"));
+                }
+                if (opts.containsKey(ruby.newSymbol("should_optimize"))) {
+                    shouldOptimize = (RubyBoolean) opts.get(ruby.newSymbol("should_optimize"));
                 }
                 if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
                     ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
@@ -313,9 +317,11 @@ public class Memcached extends RubyObject {
             if (ruby.getTrue() == binaryValue) {
                 builder.setProtocol(Protocol.BINARY);
             }
+            if (ruby.getFalse() == shouldOptimize) {
+                builder.setShouldOptimize(false);
+            }
 
             builder.setDaemon(true);
-            builder.setShouldOptimize(false);
             client = new MemcachedClient(builder.build(), addresses);
 
             if ("marshal_zlib".equals(transcoderValue)) {
