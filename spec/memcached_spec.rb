@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Memcached do
   context "localhost" do
     before(:all) { @memcached = Memcached.new(["127.0.0.1:11211"]) }
-    after(:all) { @memcached.shutdown }
+    after(:all) { @memcached.quit }
 
     it "should get all servers" do
       @memcached.set "foo", "bar"
@@ -124,14 +124,6 @@ describe Memcached do
         @memcached.delete "key" rescue nil
         lambda { @memcached.delete "key" }.should raise_error(Memcached::NotFound)
       end
-
-      #context "incr/decr" do
-        #it "should incr key" do
-          #@memcached.incr "intkey"
-          #@memcached.incr "intkey"
-          #@memcached.get("intkey").should == 1
-        #end
-      #end
     end
 
     context "flush" do
@@ -163,12 +155,6 @@ describe Memcached do
           @memcached.get("jrubykey").should == "value"
         end
 
-        #it "should incr/decr with prefix_key" do
-          #@prefix_memcached.incr "intkey"
-          #@prefix_memcached.decr "intkey"
-          #@memcached.get("jrubyintkey").should == 0
-        #end
-
         it "should add/replace with prefix_key" do
           @prefix_memcached.add "newkey", "value"
           @prefix_memcached.replace "newkey", "new_value"
@@ -186,6 +172,41 @@ describe Memcached do
           @prefix_memcached.set "key2", "value2"
           @prefix_memcached.get(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
         end
+      end
+    end
+
+    context "timeout" do
+      before(:all) do
+        @memcached = Memcached.new("127.0.0.1:11211")
+        @timeout_memcached = Memcached.new("127.0.0.1:11211", :timeout => 1, :exception_retry_limit => 0)
+      end
+      after(:all) do
+        @timeout_memcached.quit
+        @memcached.quit
+      end
+
+      it "should set timeout" do
+        lambda { @timeout_memcached.set "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
+
+      it "should add timeout" do
+        @memcached.delete "key" rescue nil
+        lambda { @timeout_memcached.add "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
+
+      it "should replace timeout" do
+        @memcached.set "key", "value"
+        lambda { @timeout_memcached.replace "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
+
+      it "should delete timeout" do
+        @memcached.set "key", "value"
+        lambda { @timeout_memcached.delete "key" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
+
+      it "should get timeout" do
+        @memcached.set "key", "value"
+        lambda { @timeout_memcached.get "key" }.should raise_error(Memcached::ATimeoutOccurred)
       end
     end
   end

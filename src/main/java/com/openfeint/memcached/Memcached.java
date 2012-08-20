@@ -39,12 +39,18 @@ public class Memcached extends RubyObject {
 
     private int ttl;
 
+    private int timeout;
+
+    private int exceptionRetryLimit;
+
     private String prefixKey;
 
     public Memcached(final Ruby ruby, RubyClass rubyClass) {
         super(ruby, rubyClass);
 
         ttl = 604800;
+        timeout = -1;
+        exceptionRetryLimit = 5;
         prefixKey = "";
     }
 
@@ -90,19 +96,39 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
-        int timeout = getTimeout(args);
-        try {
-            boolean result = client.add(key, timeout, value, transcoder).get();
-            if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+        int expiry = getExpiry(args);
+        int retry = 0;
+        while (true) {
+            try {
+                boolean result = client.add(key, expiry, value, transcoder).get();
+                if (result == false) {
+                    throw Error.newNotStored(ruby, "not stored");
+                }
+                return context.nil;
+            } catch (ExecutionException e) {
+                if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
+                }
+            } catch (RuntimeException e) {
+                if (e.getCause() != null &&
+                    "net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw e;
+                }
+            } catch (InterruptedException e) {
+                throw ruby.newThreadError(e.getLocalizedMessage());
             }
-            return context.nil;
-        } catch (OperationTimeoutException e) {
-            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
-        } catch (ExecutionException e) {
-            throw ruby.newRuntimeError(e.getLocalizedMessage());
-        } catch (InterruptedException e) {
-            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -111,19 +137,39 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
-        int timeout = getTimeout(args);
-        try {
-            boolean result = client.replace(key, timeout, value, transcoder).get();
-            if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+        int expiry = getExpiry(args);
+        int retry = 0;
+        while (true) {
+            try {
+                boolean result = client.replace(key, expiry, value, transcoder).get();
+                if (result == false) {
+                    throw Error.newNotStored(ruby, "not stored");
+                }
+                return context.nil;
+            } catch (ExecutionException e) {
+                if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
+                }
+            } catch (RuntimeException e) {
+                if (e.getCause() != null &&
+                    "net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw e;
+                }
+            } catch (InterruptedException e) {
+                throw ruby.newThreadError(e.getLocalizedMessage());
             }
-            return context.nil;
-        } catch (OperationTimeoutException e) {
-            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
-        } catch (ExecutionException e) {
-            throw ruby.newRuntimeError(e.getLocalizedMessage());
-        } catch (InterruptedException e) {
-            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -132,19 +178,39 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
         IRubyObject value = args[1];
-        int timeout = getTimeout(args);
-        try {
-            boolean result = client.set(key, timeout, value, transcoder).get();
-            if (result == false) {
-                throw Error.newNotStored(ruby, "not stored");
+        int expiry = getExpiry(args);
+        int retry = 0;
+        while (true) {
+            try {
+                boolean result = client.set(key, expiry, value, transcoder).get();
+                if (result == false) {
+                    throw Error.newNotStored(ruby, "not stored");
+                }
+                return context.nil;
+            } catch (ExecutionException e) {
+                if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
+                }
+            } catch (RuntimeException e) {
+                if (e.getCause() != null &&
+                    "net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw e;
+                }
+            } catch (InterruptedException e) {
+                throw ruby.newThreadError(e.getLocalizedMessage());
             }
-            return context.nil;
-        } catch (OperationTimeoutException e) {
-            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
-        } catch (ExecutionException e) {
-            throw ruby.newRuntimeError(e.getLocalizedMessage());
-        } catch (InterruptedException e) {
-            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -153,11 +219,15 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         IRubyObject keys = args[0];
         if (keys instanceof RubyString) {
-            IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
-            if (value == null) {
-                throw Error.newNotFound(ruby, "not found");
+            try {
+                IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
+                if (value == null) {
+                    throw Error.newNotFound(ruby, "not found");
+                }
+                return value;
+            } catch (OperationTimeoutException e) {
+                throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
             }
-            return value;
         } else if (keys instanceof RubyArray) {
             RubyHash results = RubyHash.newHash(ruby);
 
@@ -177,8 +247,8 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
-        int timeout = getTimeout(args);
-        long result = client.incr(key, by, 1, timeout);
+        int expiry = getExpiry(args);
+        long result = client.incr(key, by, 1, expiry);
         return ruby.newFixnum(result);
     }
 
@@ -187,26 +257,46 @@ public class Memcached extends RubyObject {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
-        int timeout = getTimeout(args);
-        long result = client.decr(key, by, 0, timeout);
+        int expiry = getExpiry(args);
+        long result = client.decr(key, by, 0, expiry);
         return ruby.newFixnum(result);
     }
 
-    @JRubyMethod
+    @JRubyMethod(name = "delete")
     public IRubyObject delete(ThreadContext context, IRubyObject key) {
         Ruby ruby = context.getRuntime();
-        try {
-            boolean result = client.delete(getFullKey(key.toString())).get();
-            if (result == false) {
-                throw Error.newNotFound(ruby, "not found");
+        int retry = 0;
+        while (true) {
+            try {
+                boolean result = client.delete(getFullKey(key.toString())).get();
+                if (result == false) {
+                    throw Error.newNotFound(ruby, "not found");
+                }
+                return context.nil;
+            } catch (ExecutionException e) {
+                if ("net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw ruby.newRuntimeError(e.getLocalizedMessage());
+                }
+            } catch (RuntimeException e) {
+                if (e.getCause() != null &&
+                    "net.spy.memcached.internal.CheckedOperationTimeoutException".equals(e.getCause().getClass().getName())) {
+                    if (retry == exceptionRetryLimit) {
+                        throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                    }
+                    retry++;
+                    continue;
+                } else {
+                    throw e;
+                }
+            } catch (InterruptedException e) {
+                throw ruby.newThreadError(e.getLocalizedMessage());
             }
-            return context.nil;
-        } catch (OperationTimeoutException e) {
-            throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
-        } catch (ExecutionException e) {
-            throw ruby.newRuntimeError(e.getLocalizedMessage());
-        } catch (InterruptedException e) {
-            throw ruby.newThreadError(e.getLocalizedMessage());
         }
     }
 
@@ -278,6 +368,12 @@ public class Memcached extends RubyObject {
                 if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
                     ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
                 }
+                if (opts.containsKey(ruby.newSymbol("timeout"))) {
+                    timeout = Integer.parseInt(opts.get(ruby.newSymbol("timeout")).toString());
+                }
+                if (opts.containsKey(ruby.newSymbol("exception_retry_limit"))) {
+                    exceptionRetryLimit = Integer.parseInt(opts.get(ruby.newSymbol("exception_retry_limit")).toString());
+                }
                 if (opts.containsKey(ruby.newSymbol("namespace"))) {
                     prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
                 }
@@ -321,6 +417,9 @@ public class Memcached extends RubyObject {
                 builder.setShouldOptimize(true);
             }
 
+            if (timeout != -1) {
+                builder.setOpTimeout(timeout);
+            }
             builder.setDaemon(true);
             client = new MemcachedClient(builder.build(), addresses);
 
@@ -336,7 +435,7 @@ public class Memcached extends RubyObject {
         return context.nil;
     }
 
-    private int getTimeout(IRubyObject[] args) {
+    private int getExpiry(IRubyObject[] args) {
         if (args.length > 2) {
             return (int) args[2].convertToInteger().getLongValue();
         }
