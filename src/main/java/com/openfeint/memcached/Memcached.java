@@ -317,8 +317,8 @@ public class Memcached extends RubyObject {
             if (ruby.getTrue() == binaryValue) {
                 builder.setProtocol(Protocol.BINARY);
             }
-            if (ruby.getFalse() == shouldOptimize) {
-                builder.setShouldOptimize(false);
+            if (ruby.getTrue() == shouldOptimize) {
+                builder.setShouldOptimize(true);
             }
 
             builder.setDaemon(true);
