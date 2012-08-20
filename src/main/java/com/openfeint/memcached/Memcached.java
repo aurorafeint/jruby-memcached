@@ -1,6 +1,7 @@
 package com.openfeint.memcached;
 
 import com.openfeint.memcached.error.Error;
+import com.openfeint.memcached.error.NotFound;
 import com.openfeint.memcached.transcoder.MarshalTranscoder;
 import com.openfeint.memcached.transcoder.MarshalZlibTranscoder;
 import net.spy.memcached.AddrUtil;
@@ -20,6 +21,7 @@ import org.jruby.RubyObject;
 import org.jruby.RubyString;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
@@ -218,28 +220,35 @@ public class Memcached extends RubyObject {
     public IRubyObject get(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
         IRubyObject keys = args[0];
-        if (keys instanceof RubyString) {
+        int retry = 0;
+        while (true) {
             try {
-                IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
-                if (value == null) {
-                    throw Error.newNotFound(ruby, "not found");
+                if (keys instanceof RubyString) {
+                    IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
+                    if (value == null) {
+                        throw Error.newNotFound(ruby, "not found");
+                    }
+                    return value;
+                } else if (keys instanceof RubyArray) {
+                    RubyHash results = RubyHash.newHash(ruby);
+
+                    Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
+                    for (String key : (List<String>) keys.convertToArray()) {
+                        if (bulkResults.containsKey(getFullKey(key))) {
+                            results.put(key, bulkResults.get(getFullKey(key)));
+                        }
+                    }
+                    return results;
                 }
-                return value;
             } catch (OperationTimeoutException e) {
                 throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+            } catch (RaiseException e) {
+                throw e;
+            } catch (RuntimeException e) {
+                throw ruby.newRuntimeError(e.getLocalizedMessage());
             }
-        } else if (keys instanceof RubyArray) {
-            RubyHash results = RubyHash.newHash(ruby);
-
-            Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
-            for (String key : (List<String>) keys.convertToArray()) {
-                if (bulkResults.containsKey(getFullKey(key))) {
-                    results.put(key, bulkResults.get(getFullKey(key)));
-                }
-            }
-            return results;
+            return context.nil;
         }
-        return context.nil;
     }
 
     @JRubyMethod(name = "incr", required = 1, optional = 2)
