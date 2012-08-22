@@ -35,6 +35,17 @@ You can get multiple values at once:
     $cache.get ['test', 'test2', 'missing']
       #=> {"test" => "hello", "test2" => "hello"}
 
+You can set a counter and increment it. Note that you must initialize it
+with an integer, encoded as an unmarshalled ASCII string:
+
+    $cache.increment 'counter' #=> 1
+    $cache.increment 'counter' #=> 2
+    $cache.get('counter').to_i #=> 2
+
+You can get some server stats:
+
+    $cache.stats #=> {..., :bytes_written=>[62], :version=>["1.2.4"] ...}
+
 ## Rails
 
   # config/environment.rb

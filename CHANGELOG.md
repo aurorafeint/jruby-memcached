@@ -1,3 +1,13 @@
+## 0.5.0 (Aug 22, 2012)
+
+Features:
+
+  - update spymemcached to 2.8.3, which set shouldOptimize as false by
+default
+  - add Memcached::ATimeoutOccurred exception
+  - accept exception_retry_limit option
+  - Memcached increment/decrement work with MarshalTranscoder
+
 ## 0.4.1 (Aug 17, 2012)
 
 Bugfixes:
