@@ -3,6 +3,7 @@ package com.openfeint.memcached.transcoder;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.transcoders.Transcoder;
 import org.jruby.Ruby;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.runtime.marshal.MarshalStream;
 import org.jruby.runtime.marshal.UnmarshalStream;
@@ -17,9 +18,8 @@ import java.io.IOException;
  *
  */
 public class MarshalTranscoder implements Transcoder {
-    private Ruby ruby;
+    protected Ruby ruby;
     private int flags;
-    static final int SPECIAL_LONG = (3 << 8);
 
     public MarshalTranscoder(Ruby ruby) {
         this(ruby, 0);
@@ -42,24 +42,21 @@ public class MarshalTranscoder implements Transcoder {
                 marshal.dumpObject((IRubyObject) o);
                 byte[] bytes = baos.toByteArray();
                 return new CachedData(getFlags(), bytes, bytes.length);
-            } catch (IOException ioe) {
-                throw ruby.newIOErrorFromException(ioe);
+            } catch (IOException e) {
+                throw ruby.newIOErrorFromException(e);
             }
         } else {
-            byte[] bytes = o.toString().getBytes();
-            return new CachedData(SPECIAL_LONG, bytes, bytes.length);
+            return encodeNumber(o);
         }
     }
 
     public Object decode(CachedData d) {
-        if (d.getFlags() == SPECIAL_LONG) {
-            return Long.parseLong(new String(d.getData()).trim());
-        } else {
-            try {
-                return new UnmarshalStream(ruby, new ByteArrayInputStream(d.getData()), null, false, false).unmarshalObject();
-            } catch (IOException ioe) {
-                throw ruby.newIOErrorFromException(ioe);
-            }
+        try {
+            return new UnmarshalStream(ruby, new ByteArrayInputStream(d.getData()), null, false, false).unmarshalObject();
+        } catch (RaiseException e) {
+            return decodeNumber(d, e);
+        } catch (IOException e) {
+            return decodeNumber(d, e);
         }
     }
 
@@ -69,5 +66,26 @@ public class MarshalTranscoder implements Transcoder {
 
     public int getFlags() {
         return flags;
+    }
+
+    protected CachedData encodeNumber(Object o) {
+        byte[] bytes = o.toString().getBytes();
+        return new CachedData(getFlags(), bytes, bytes.length);
+    }
+
+    protected Long decodeNumber(CachedData d, RaiseException originalException) {
+        try {
+            return Long.valueOf(new String(d.getData()).trim());
+        } catch (NumberFormatException e) {
+            throw ruby.newRuntimeError(originalException.getLocalizedMessage());
+        }
+    }
+
+    protected Long decodeNumber(CachedData d, IOException originalException) {
+        try {
+            return Long.valueOf(new String(d.getData()).trim());
+        } catch (NumberFormatException e) {
+            throw ruby.newIOErrorFromException(originalException);
+        }
     }
 }
