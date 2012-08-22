@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    jruby-memcached (0.4.1)
+    jruby-memcached (0.5.0)
 
 GEM
   remote: http://rubygems.org/
