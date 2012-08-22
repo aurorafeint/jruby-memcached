@@ -261,6 +261,14 @@ describe Memcached do
         @memcached.set "key", "value"
         lambda { @timeout_memcached.get "key" }.should raise_error(Memcached::ATimeoutOccurred)
       end
+
+      it "should increment timeout" do
+        lambda { @timeout_memcached.increment "intkey" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
+
+      it "should decrement timeout" do
+        lambda { @timeout_memcached.decrement "intkey" }.should raise_error(Memcached::ATimeoutOccurred)
+      end
     end
   end
 end

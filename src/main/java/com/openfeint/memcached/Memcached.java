@@ -269,8 +269,19 @@ public class Memcached extends RubyObject {
         String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
         int expiry = getExpiry(args);
-        long result = client.incr(key, by, 1, expiry);
-        return ruby.newFixnum(result);
+        int retry = 0;
+        while (true) {
+            try {
+                long result = client.incr(key, by, 1, expiry);
+                return ruby.newFixnum(result);
+            } catch (OperationTimeoutException e) {
+                if (retry == exceptionRetryLimit) {
+                    throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                }
+                retry++;
+                continue;
+            }
+        }
     }
 
     @JRubyMethod(name = { "decrement", "decr" }, required = 1, optional = 2)
@@ -279,8 +290,19 @@ public class Memcached extends RubyObject {
         String key = getFullKey(args[0].toString());
         int by = getIncrDecrBy(args);
         int expiry = getExpiry(args);
-        long result = client.decr(key, by, 0, expiry);
-        return ruby.newFixnum(result);
+        int retry = 0;
+        while (true) {
+            try {
+                long result = client.decr(key, by, 0, expiry);
+                return ruby.newFixnum(result);
+            } catch (OperationTimeoutException e) {
+                if (retry == exceptionRetryLimit) {
+                    throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                }
+                retry++;
+                continue;
+            }
+        }
     }
 
     @JRubyMethod(name = "delete")
