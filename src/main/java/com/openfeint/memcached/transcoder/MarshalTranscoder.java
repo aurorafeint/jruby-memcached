@@ -16,9 +16,10 @@ import java.io.IOException;
  * MarshalTranscoder does marshaling and unmarshaling.
  *
  */
-public class MarshalTranscoder implements Transcoder<IRubyObject> {
+public class MarshalTranscoder implements Transcoder {
     private Ruby ruby;
     private int flags;
+    static final int SPECIAL_LONG = (3 << 8);
 
     public MarshalTranscoder(Ruby ruby) {
         this(ruby, 0);
@@ -33,23 +34,32 @@ public class MarshalTranscoder implements Transcoder<IRubyObject> {
         return false;
     }
 
-    public CachedData encode(IRubyObject o) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            MarshalStream marshal = new MarshalStream(ruby, baos, Integer.MAX_VALUE);
-            marshal.dumpObject(o);
-            byte[] bytes = baos.toByteArray();
-            return new CachedData(getFlags(), bytes, bytes.length);
-        } catch (IOException ioe) {
-            throw ruby.newIOErrorFromException(ioe);
+    public CachedData encode(Object o) {
+        if (o instanceof IRubyObject) {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                MarshalStream marshal = new MarshalStream(ruby, baos, Integer.MAX_VALUE);
+                marshal.dumpObject((IRubyObject) o);
+                byte[] bytes = baos.toByteArray();
+                return new CachedData(getFlags(), bytes, bytes.length);
+            } catch (IOException ioe) {
+                throw ruby.newIOErrorFromException(ioe);
+            }
+        } else {
+            byte[] bytes = o.toString().getBytes();
+            return new CachedData(SPECIAL_LONG, bytes, bytes.length);
         }
     }
 
-    public IRubyObject decode(CachedData d) {
-        try {
-            return new UnmarshalStream(ruby, new ByteArrayInputStream(d.getData()), null, false, false).unmarshalObject();
-        } catch (IOException ioe) {
-            throw ruby.newIOErrorFromException(ioe);
+    public Object decode(CachedData d) {
+        if (d.getFlags() == SPECIAL_LONG) {
+            return Long.parseLong(new String(d.getData()).trim());
+        } else {
+            try {
+                return new UnmarshalStream(ruby, new ByteArrayInputStream(d.getData()), null, false, false).unmarshalObject();
+            } catch (IOException ioe) {
+                throw ruby.newIOErrorFromException(ioe);
+            }
         }
     }
 

@@ -126,6 +126,51 @@ describe Memcached do
       end
     end
 
+    context "increment" do
+      it "should increment to default value" do
+        @memcached.delete "intkey" rescue nil
+        @memcached.increment "intkey"
+        @memcached.get("intkey").should == 1
+      end
+
+      it "should increment by 1" do
+        @memcached.delete "intkey" rescue nil
+        @memcached.increment "intkey"
+        @memcached.increment "intkey"
+        @memcached.get("intkey").should == 2
+      end
+
+      it "should increment by 10" do
+        @memcached.delete "intkey" rescue nil
+        @memcached.increment "intkey"
+        @memcached.increment "intkey", 10
+        @memcached.get("intkey").should == 11
+      end
+    end
+
+    context "decrement" do
+      it "should decrement to default value" do
+        @memcached.delete "intkey" rescue nil
+        @memcached.decrement "intkey"
+        @memcached.get("intkey").should == 0
+      end
+
+      it "should decrement by 1" do
+        @memcached.delete "intkey" rescue nil
+        2.times { @memcached.increment "intkey" }
+        @memcached.decrement "intkey"
+        @memcached.get("intkey").should == 1
+      end
+
+      it "should decrement by 10" do
+        @memcached.delete "intkey" rescue nil
+        @memcached.increment "intkey"
+        @memcached.increment "intkey", 20
+        @memcached.decrement "intkey", 10
+        @memcached.get("intkey").should == 11
+      end
+    end
+
     context "flush" do
       it "should flush all keys" do
         @memcached.set "key1", "value2"
@@ -171,6 +216,14 @@ describe Memcached do
           @prefix_memcached.set "key1", "value1"
           @prefix_memcached.set "key2", "value2"
           @prefix_memcached.get(["key1", "key2"]).should == {"key1" => "value1", "key2" => "value2"}
+        end
+
+        it "should increment/decrement with prefix_key" do
+          @prefix_memcached.delete "intkey" rescue nil
+          @prefix_memcached.increment "intkey"
+          @prefix_memcached.increment "intkey", 10
+          @prefix_memcached.decrement "intkey", 5
+          @memcached.get("jrubyintkey").should == 6
         end
       end
     end

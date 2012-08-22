@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutionException;
 public class Memcached extends RubyObject {
     private MemcachedClient client;
 
-    private Transcoder<IRubyObject> transcoder;
+    private Transcoder transcoder;
 
     private int ttl;
 
@@ -102,7 +102,7 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = client.add(key, expiry, value, transcoder).get();
+                boolean result = (Boolean) client.add(key, expiry, value, transcoder).get();
                 if (result == false) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
@@ -145,7 +145,7 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = client.replace(key, expiry, value, transcoder).get();
+                boolean result = (Boolean) client.replace(key, expiry, value, transcoder).get();
                 if (result == false) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
@@ -188,7 +188,7 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = client.set(key, expiry, value, transcoder).get();
+                boolean result = (Boolean) client.set(key, expiry, value, transcoder).get();
                 if (result == false) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
@@ -230,9 +230,15 @@ public class Memcached extends RubyObject {
         while (true) {
             try {
                 if (keys instanceof RubyString) {
-                    IRubyObject value = client.get(getFullKey(keys.toString()), transcoder);
-                    if (value == null) {
+                    Object ret = client.get(getFullKey(keys.toString()), transcoder);
+                    if (ret == null) {
                         throw Error.newNotFound(ruby, "not found");
+                    }
+                    IRubyObject value;
+                    if (ret instanceof IRubyObject) {
+                        value = (IRubyObject) ret;
+                    } else {
+                        value = ruby.newFixnum((Long) ret);
                     }
                     return value;
                 } else if (keys instanceof RubyArray) {
@@ -241,7 +247,7 @@ public class Memcached extends RubyObject {
                     Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
                     for (String key : (List<String>) keys.convertToArray()) {
                         if (bulkResults.containsKey(getFullKey(key))) {
-                            results.put(key, bulkResults.get(getFullKey(key)));
+                            results.put(key, (IRubyObject) bulkResults.get(getFullKey(key)));
                         }
                     }
                     return results;
@@ -257,7 +263,7 @@ public class Memcached extends RubyObject {
         }
     }
 
-    @JRubyMethod(name = "incr", required = 1, optional = 2)
+    @JRubyMethod(name = { "increment", "incr" }, required = 1, optional = 2)
     public IRubyObject incr(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
@@ -267,7 +273,7 @@ public class Memcached extends RubyObject {
         return ruby.newFixnum(result);
     }
 
-    @JRubyMethod(name = "decr", required = 1, optional = 2)
+    @JRubyMethod(name = { "decrement", "decr" }, required = 1, optional = 2)
     public IRubyObject decr(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
         String key = getFullKey(args[0].toString());
@@ -438,13 +444,14 @@ public class Memcached extends RubyObject {
                 builder.setOpTimeout(timeout);
             }
             builder.setDaemon(true);
-            client = new MemcachedClient(builder.build(), addresses);
-
             if ("marshal_zlib".equals(transcoderValue)) {
                 transcoder = new MarshalZlibTranscoder(ruby);
             } else {
                 transcoder = new MarshalTranscoder(ruby);
             }
+            builder.setTranscoder(transcoder);
+
+            client = new MemcachedClient(builder.build(), addresses);
         } catch (IOException ioe) {
             throw ruby.newIOErrorFromException(ioe);
         }
