@@ -23,3 +23,8 @@ target/surefire
 target/dependency-reduced-pom.xml
 target/original-spymemcached-ext-0.0.1.jar
 target/original-xmemcached-ext-0.0.1.jar
+
+.idea/
+out/
+spymemcached-ext.iml
+src/main/Main.iml

@@ -1,7 +1,6 @@
 package com.openfeint.memcached;
 
 import com.openfeint.memcached.error.Error;
-import com.openfeint.memcached.error.NotFound;
 import com.openfeint.memcached.transcoder.MarshalTranscoder;
 import com.openfeint.memcached.transcoder.MarshalZlibTranscoder;
 import net.spy.memcached.AddrUtil;
@@ -102,8 +101,8 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = (Boolean) client.add(key, expiry, value, transcoder).get();
-                if (result == false) {
+                Boolean result = (Boolean) client.add(key, expiry, value, transcoder).get();
+                if (!result) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
@@ -115,7 +114,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -126,7 +124,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -145,8 +142,8 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = (Boolean) client.replace(key, expiry, value, transcoder).get();
-                if (result == false) {
+                Boolean result = (Boolean) client.replace(key, expiry, value, transcoder).get();
+                if (!result) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
@@ -158,7 +155,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -169,7 +165,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -188,8 +183,8 @@ public class Memcached extends RubyObject {
         int retry = 0;
         while (true) {
             try {
-                boolean result = (Boolean) client.set(key, expiry, value, transcoder).get();
-                if (result == false) {
+                Boolean result = (Boolean) client.set(key, expiry, value, transcoder).get();
+                if (!result) {
                     throw Error.newNotStored(ruby, "not stored");
                 }
                 return context.nil;
@@ -201,7 +196,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -212,7 +206,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -244,10 +237,10 @@ public class Memcached extends RubyObject {
                 } else if (keys instanceof RubyArray) {
                     RubyHash results = RubyHash.newHash(ruby);
 
-                    Map<String, IRubyObject> bulkResults = client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
+                    Map<String, IRubyObject> bulkResults = (Map<String, IRubyObject>) client.getBulk(getFullKeys(keys.convertToArray()), transcoder);
                     for (String key : (List<String>) keys.convertToArray()) {
                         if (bulkResults.containsKey(getFullKey(key))) {
-                            results.put(key, (IRubyObject) bulkResults.get(getFullKey(key)));
+                            results.put(key, bulkResults.get(getFullKey(key)));
                         }
                     }
                     return results;
@@ -255,11 +248,13 @@ public class Memcached extends RubyObject {
             } catch (RaiseException e) {
                 throw e;
             } catch (OperationTimeoutException e) {
-                throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                if (retry == exceptionRetryLimit) {
+                    throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
+                }
+                retry++;
             } catch (RuntimeException e) {
                 throw ruby.newRuntimeError(e.getLocalizedMessage());
             }
-            return context.nil;
         }
     }
 
@@ -279,7 +274,6 @@ public class Memcached extends RubyObject {
                     throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                 }
                 retry++;
-                continue;
             }
         }
     }
@@ -300,7 +294,6 @@ public class Memcached extends RubyObject {
                     throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                 }
                 retry++;
-                continue;
             }
         }
     }
@@ -312,7 +305,7 @@ public class Memcached extends RubyObject {
         while (true) {
             try {
                 boolean result = client.delete(getFullKey(key.toString())).get();
-                if (result == false) {
+                if (!result) {
                     throw Error.newNotFound(ruby, "not found");
                 }
                 return context.nil;
@@ -324,7 +317,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }
@@ -335,7 +327,6 @@ public class Memcached extends RubyObject {
                         throw Error.newATimeoutOccurred(ruby, e.getLocalizedMessage());
                     }
                     retry++;
-                    continue;
                 } else {
                     throw ruby.newRuntimeError(e.getLocalizedMessage());
                 }

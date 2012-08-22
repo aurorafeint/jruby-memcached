@@ -6,7 +6,6 @@ import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyHash;
 import org.jruby.RubyFixnum;
-import org.jruby.RubyObject;
 import org.jruby.RubyString;
 import org.jruby.anno.JRubyClass;
 import org.jruby.anno.JRubyMethod;
@@ -72,7 +71,6 @@ public class Rails extends Memcached {
 
     @JRubyMethod(name = { "get", "[]" }, required = 1, optional = 1)
     public IRubyObject get(ThreadContext context, IRubyObject[] args) {
-        Ruby ruby = context.getRuntime();
         IRubyObject key = args[0];
         RubyBoolean notRaw = notRaw(context, args, 1);
         try {
@@ -87,8 +85,6 @@ public class Rails extends Memcached {
 
     @JRubyMethod(name = "read", required = 1, optional = 1)
     public IRubyObject read(ThreadContext context, IRubyObject[] args) {
-        Ruby ruby = context.getRuntime();
-        RubyBoolean not_raw = ruby.getTrue();
         IRubyObject key = args[0];
         RubyBoolean notRaw = notRaw(context, args, 1);
         return get(context, new IRubyObject[] { key, notRaw });
@@ -107,7 +103,6 @@ public class Rails extends Memcached {
 
     @JRubyMethod(name = "get_multi", required = 1, optional = 1)
     public IRubyObject getMulti(ThreadContext context, IRubyObject[] args) {
-        Ruby ruby = context.getRuntime();
         IRubyObject keys = args[0];
         RubyBoolean notRaw = notRaw(context, args, 1);
         return super.get(context, new IRubyObject[] { keys, notRaw });
@@ -130,7 +125,6 @@ public class Rails extends Memcached {
 
     @JRubyMethod(name = "write", required = 2, optional = 1)
     public IRubyObject write(ThreadContext context, IRubyObject[] args) {
-        Ruby ruby = context.getRuntime();
         IRubyObject key = args[0];
         IRubyObject value = args[1];
         RubyFixnum ttl = getTTL(context, args, 2);
@@ -229,9 +223,8 @@ public class Rails extends Memcached {
         Ruby ruby = context.getRuntime();
         RubyBoolean notRaw = ruby.getTrue();
         if (args.length > index) {
-            if (args[index] instanceof RubyBoolean && ruby.getTrue() == (RubyBoolean) args[index]) {
-                notRaw = ruby.getFalse();
-            } else if (args[index] instanceof RubyHash && ruby.getTrue() == ((RubyHash) args[index]).get(ruby.newSymbol("raw"))) {
+            if ((args[index] instanceof RubyBoolean && ruby.getTrue() == args[index]) ||
+                (args[index] instanceof RubyHash && ruby.getTrue() == ((RubyHash) args[index]).get(ruby.newSymbol("raw")))) {
                 notRaw = ruby.getFalse();
             }
         }
