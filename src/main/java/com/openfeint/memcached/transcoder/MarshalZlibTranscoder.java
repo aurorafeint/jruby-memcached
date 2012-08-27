@@ -32,6 +32,7 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
 
     public CachedData encode(Object o) {
         if (o instanceof IRubyObject) {
+            ZOutputStream zout = null;
             try {
                 ByteArrayOutputStream out1 = new ByteArrayOutputStream();
                 MarshalStream marshal = new MarshalStream(ruby, out1, Integer.MAX_VALUE);
@@ -40,9 +41,10 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
                 byte[] bytes;
                 if (getFlags() == COMPRESS_FLAG) {
                     ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-                    ZOutputStream zout = new ZOutputStream(out2, JZlib.Z_DEFAULT_COMPRESSION);
+                    zout = new ZOutputStream(out2, JZlib.Z_DEFAULT_COMPRESSION);
                     zout.write(out1.toByteArray());
-                    zout.close();
+                    zout.flush();
+                    zout.end();
                     bytes = out2.toByteArray();
                 } else {
                     bytes = out1.toByteArray();
@@ -51,6 +53,13 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
                 return new CachedData(super.getFlags(), bytes, bytes.length);
             } catch (IOException e) {
                 throw ruby.newIOErrorFromException(e);
+            } finally {
+                if (zout != null) {
+                    try {
+                        zout.close();
+                    } catch (IOException e) {}
+                    zout = null;
+                }
             }
         } else {
             return super.encodeNumber(o);
@@ -58,11 +67,12 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
     }
 
     public Object decode(CachedData d) {
+        ZInputStream zin = null;
         try {
             byte[] bytes;
             if (d.getFlags() == COMPRESS_FLAG) {
                 ByteArrayInputStream in = new ByteArrayInputStream(d.getData());
-                ZInputStream zin = new ZInputStream(in);
+                zin = new ZInputStream(in);
 
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 int nRead;
@@ -72,7 +82,6 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
                 }
                 buffer.flush();
                 bytes = buffer.toByteArray();
-                zin.close();
             } else {
                 bytes = d.getData();
             }
@@ -82,6 +91,13 @@ public class MarshalZlibTranscoder extends MarshalTranscoder {
             return super.decodeNumber(d, e);
         } catch (IOException e) {
             return super.decodeNumber(d, e);
+        } finally {
+            if (zin != null) {
+                try {
+                    zin.close();
+                } catch (IOException e) {}
+                zin = null;
+            }
         }
     }
 }
