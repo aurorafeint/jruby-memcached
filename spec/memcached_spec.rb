@@ -227,48 +227,5 @@ describe Memcached do
         end
       end
     end
-
-    context "timeout" do
-      before(:all) do
-        @memcached = Memcached.new("127.0.0.1:11211")
-        @timeout_memcached = Memcached.new("127.0.0.1:11211", :timeout => 1, :exception_retry_limit => 0)
-      end
-      after(:all) do
-        @timeout_memcached.quit
-        @memcached.quit
-      end
-
-      it "should set timeout" do
-        lambda { @timeout_memcached.set "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should add timeout" do
-        @memcached.delete "key" rescue nil
-        lambda { @timeout_memcached.add "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should replace timeout" do
-        @memcached.set "key", "value"
-        lambda { @timeout_memcached.replace "key", "new_value" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should delete timeout" do
-        @memcached.set "key", "value"
-        lambda { @timeout_memcached.delete "key" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should get timeout" do
-        @memcached.set "key", "value"
-        lambda { @timeout_memcached.get "key" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should increment timeout" do
-        lambda { @timeout_memcached.increment "intkey" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-
-      it "should decrement timeout" do
-        lambda { @timeout_memcached.decrement "intkey" }.should raise_error(Memcached::ATimeoutOccurred)
-      end
-    end
   end
 end
