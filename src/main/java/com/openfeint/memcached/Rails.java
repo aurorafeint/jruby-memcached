@@ -16,6 +16,8 @@ import org.jruby.runtime.builtin.IRubyObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @JRubyClass(name = "Memcached::Rails", parent = "Memcached")
 public class Rails extends Memcached {
@@ -30,12 +32,7 @@ public class Rails extends Memcached {
     @JRubyMethod(name = "initialize", rest = true)
     public IRubyObject initialize(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
-        RubyHash opts;
-        if (args[args.length - 1] instanceof RubyHash) {
-            opts = (RubyHash) args[args.length - 1];
-        } else {
-            opts = new RubyHash(ruby);
-        }
+
         List<String> servers = new ArrayList<String>();
         for (IRubyObject arg : args) {
             if (arg instanceof RubyString) {
@@ -44,20 +41,30 @@ public class Rails extends Memcached {
                 servers.addAll((List<String>) arg.convertToArray());
             }
         }
-        if (servers.isEmpty()) {
-            IRubyObject serverNames = (IRubyObject) opts.get(ruby.newSymbol("servers"));
-            servers.addAll((List<String>) serverNames.convertToArray());
+
+        Map<String, String> options = new HashMap<String, String>();
+        if (args[args.length - 1] instanceof RubyHash) {
+            RubyHash arguments = args[args.length - 1].convertToHash();
+            for (Object key : arguments.keySet()) {
+                if (!"servers".equals(key.toString())) {
+                    options.put(key.toString(), arguments.get(key).toString());
+                }
+            }
+            if (servers.isEmpty()) {
+                IRubyObject serverNames = (IRubyObject) arguments.get(ruby.newSymbol("servers"));
+                servers.addAll((List<String>) serverNames.convertToArray());
+            }
         }
-        if (opts.containsKey(ruby.newSymbol("namespace"))) {
-            opts.put(ruby.newSymbol("prefix_key"), opts.get(ruby.newSymbol("namespace")));
+        if (options.containsKey("namespace")) {
+            options.put("prefix_key", options.get("namespace"));
         }
-        if (opts.containsKey(ruby.newSymbol("namespace_separator"))) {
-            opts.put(ruby.newSymbol("prefix_delimiter"), opts.get(ruby.newSymbol("namespace_separator")));
+        if (options.containsKey("namespace_separator")) {
+            options.put("prefix_delimiter", options.get("namespace_separator"));
         }
-        if (opts.containsKey(ruby.newSymbol("string_return_types"))) {
+        if (options.containsKey("string_return_types")) {
             stringReturnTypes = true;
         }
-        return super.init(context, servers, opts);
+        return super.init(context, servers, options);
     }
 
     @JRubyMethod(name = "active?")

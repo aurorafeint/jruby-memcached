@@ -29,6 +29,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -58,11 +59,12 @@ public class Memcached extends RubyObject {
     @JRubyMethod(name = "initialize", optional = 2)
     public IRubyObject initialize(ThreadContext context, IRubyObject[] args) {
         Ruby ruby = context.getRuntime();
-        RubyHash options;
+        Map<String, String> options = new HashMap<String, String>();
         if (args.length > 1) {
-            options = args[1].convertToHash();
-        } else {
-            options = new RubyHash(ruby);
+            RubyHash arguments = args[1].convertToHash();
+            for (Object key : arguments.keySet()) {
+                options.put(key.toString(), arguments.get(key).toString());
+            }
         }
         List<String> servers = new ArrayList<String>();
         if (args.length > 0) {
@@ -376,7 +378,7 @@ public class Memcached extends RubyObject {
         return ttl;
     }
 
-    protected IRubyObject init(ThreadContext context, List<String> servers, RubyHash options) {
+    protected IRubyObject init(ThreadContext context, List<String> servers, Map<String, String> opts) {
         Ruby ruby = context.getRuntime();
         List<InetSocketAddress> addresses = AddrUtil.getAddresses(servers);
         try {
@@ -384,40 +386,39 @@ public class Memcached extends RubyObject {
 
             String distributionValue = "ketama";
             String hashValue = "fnv1_32";
-            RubyBoolean binaryValue = ruby.getFalse();
-            RubyBoolean shouldOptimize = ruby.getFalse();
+            boolean binaryValue = false;
+            boolean shouldOptimize = false;
             String transcoderValue = null;
-            if (!options.isEmpty()) {
-                RubyHash opts = options.convertToHash();
-                if (opts.containsKey(ruby.newSymbol("distribution"))) {
-                    distributionValue = opts.get(ruby.newSymbol("distribution")).toString();
+            if (!opts.isEmpty()) {
+                if (opts.containsKey("distribution")) {
+                    distributionValue = opts.get("distribution");
                 }
-                if (opts.containsKey(ruby.newSymbol("hash"))) {
-                    hashValue = opts.get(ruby.newSymbol("hash")).toString();
+                if (opts.containsKey("hash")) {
+                    hashValue = opts.get("hash");
                 }
-                if (opts.containsKey(ruby.newSymbol("binary_protocol"))) {
-                    binaryValue = (RubyBoolean) opts.get(ruby.newSymbol("binary_protocol"));
+                if (opts.containsKey("binary_protocol")) {
+                    binaryValue = Boolean.parseBoolean(opts.get("binary_protocol"));
                 }
-                if (opts.containsKey(ruby.newSymbol("should_optimize"))) {
-                    shouldOptimize = (RubyBoolean) opts.get(ruby.newSymbol("should_optimize"));
+                if (opts.containsKey("should_optimize")) {
+                    shouldOptimize = Boolean.parseBoolean(opts.get("should_optimize"));
                 }
-                if (opts.containsKey(ruby.newSymbol("default_ttl"))) {
-                    ttl = Integer.parseInt(opts.get(ruby.newSymbol("default_ttl")).toString());
+                if (opts.containsKey("default_ttl")) {
+                    ttl = Integer.parseInt(opts.get("default_ttl"));
                 }
-                if (opts.containsKey(ruby.newSymbol("timeout"))) {
-                    timeout = Integer.parseInt(opts.get(ruby.newSymbol("timeout")).toString());
+                if (opts.containsKey("timeout")) {
+                    timeout = Integer.parseInt(opts.get("timeout"));
                 }
-                if (opts.containsKey(ruby.newSymbol("exception_retry_limit"))) {
-                    exceptionRetryLimit = Integer.parseInt(opts.get(ruby.newSymbol("exception_retry_limit")).toString());
+                if (opts.containsKey("exception_retry_limit")) {
+                    exceptionRetryLimit = Integer.parseInt(opts.get("exception_retry_limit"));
                 }
-                if (opts.containsKey(ruby.newSymbol("namespace"))) {
-                    prefixKey = opts.get(ruby.newSymbol("namespace")).toString();
+                if (opts.containsKey("namespace")) {
+                    prefixKey = opts.get("namespace");
                 }
-                if (opts.containsKey(ruby.newSymbol("prefix_key"))) {
-                    prefixKey = opts.get(ruby.newSymbol("prefix_key")).toString();
+                if (opts.containsKey("prefix_key")) {
+                    prefixKey = opts.get("prefix_key");
                 }
-                if (opts.containsKey(ruby.newSymbol("transcoder"))) {
-                    transcoderValue = opts.get(ruby.newSymbol("transcoder")).toString();
+                if (opts.containsKey("transcoder")) {
+                    transcoderValue = opts.get("transcoder");
                 }
             }
 
@@ -446,10 +447,10 @@ public class Memcached extends RubyObject {
                 throw Error.newNotSupport(ruby, "hash not support");
             }
 
-            if (ruby.getTrue() == binaryValue) {
+            if (binaryValue) {
                 builder.setProtocol(Protocol.BINARY);
             }
-            if (ruby.getTrue() == shouldOptimize) {
+            if (shouldOptimize) {
                 builder.setShouldOptimize(true);
             }
 
@@ -465,11 +466,11 @@ public class Memcached extends RubyObject {
             builder.setTranscoder(transcoder);
 
             client = new MemcachedClient(builder.build(), addresses);
-        } catch (IOException ioe) {
-            throw ruby.newIOErrorFromException(ioe);
-        }
 
-        return context.nil;
+            return context.nil;
+        } catch (IOException e) {
+            throw ruby.newIOErrorFromException(e);
+        }
     }
 
     private int getExpiry(IRubyObject[] args) {
