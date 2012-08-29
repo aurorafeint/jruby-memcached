@@ -64,7 +64,9 @@ public class Rails extends Memcached {
         if (options.containsKey("string_return_types")) {
             stringReturnTypes = true;
         }
-        return super.init(context, servers, options);
+        init(context, servers, options);
+
+        return context.nil;
     }
 
     @JRubyMethod(name = "active?")
