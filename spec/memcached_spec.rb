@@ -25,6 +25,10 @@ describe Memcached do
       it "should raise error with unsupported option distribution" do
         lambda { Memcached.new("127.0.0.1:11211", :distribution => :unknown) }.should raise_error(Memcached::NotSupport)
       end
+
+      it "should ignore nil value" do
+        lambda { Memcached.new("127.0.0.1:11211", :prefix => nil) }.should_not raise_error
+      end
     end
 
     context "set/get" do

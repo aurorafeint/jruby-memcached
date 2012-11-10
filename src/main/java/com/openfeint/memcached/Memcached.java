@@ -63,7 +63,9 @@ public class Memcached extends RubyObject {
         if (args.length > 1) {
             RubyHash arguments = args[1].convertToHash();
             for (Object key : arguments.keySet()) {
-                options.put(key.toString(), arguments.get(key).toString());
+                if (arguments.get(key) != null) {
+                    options.put(key.toString(), arguments.get(key).toString());
+                }
             }
         }
         List<String> servers = new ArrayList<String>();
