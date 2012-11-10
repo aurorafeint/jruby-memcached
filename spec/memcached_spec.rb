@@ -19,15 +19,15 @@ describe Memcached do
       end
 
       it "should raise error with unsupported option hash" do
-        lambda { Memcached.new("127.0.0.1:11211", :hash => :unknown) }.should raise_error(Memcached::NotSupport)
+        expect { Memcached.new("127.0.0.1:11211", :hash => :unknown) }.to raise_error(Memcached::NotSupport)
       end
 
       it "should raise error with unsupported option distribution" do
-        lambda { Memcached.new("127.0.0.1:11211", :distribution => :unknown) }.should raise_error(Memcached::NotSupport)
+        expect { Memcached.new("127.0.0.1:11211", :distribution => :unknown) }.to raise_error(Memcached::NotSupport)
       end
 
       it "should ignore nil value" do
-        lambda { Memcached.new("127.0.0.1:11211", :prefix => nil) }.should_not raise_error
+        expect { Memcached.new("127.0.0.1:11211", :prefix => nil) }.not_to raise_error
       end
     end
 
@@ -51,7 +51,7 @@ describe Memcached do
 
       it "should get missing" do
         @memcached.delete "key" rescue nil
-        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.get "key" }.to raise_error(Memcached::NotFound)
       end
 
       context "multiget" do
@@ -78,7 +78,7 @@ describe Memcached do
         @memcached.set "key", "value", 1
         @memcached.get("key").should == "value"
         sleep 1
-        lambda { @memcached.get("key") }.should raise_error(Memcached::NotFound)
+        expect { @memcached.get("key") }.to raise_error(Memcached::NotFound)
       end
     end
 
@@ -91,7 +91,7 @@ describe Memcached do
 
       it "should not add existing key" do
         @memcached.set "key", "value"
-        lambda { @memcached.add "key", "value" }.should raise_error(Memcached::NotStored)
+        expect { @memcached.add "key", "value" }.to raise_error(Memcached::NotStored)
       end
 
       it "should add expiry" do
@@ -99,7 +99,7 @@ describe Memcached do
         @memcached.add "key", "value", 1
         @memcached.get "key"
         sleep 1
-        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.get "key" }.to raise_error(Memcached::NotFound)
       end
     end
 
@@ -112,8 +112,8 @@ describe Memcached do
 
       it "should not replace with new key" do
         @memcached.delete "key" rescue nil
-        lambda { @memcached.replace "key", "value" }.should raise_error(Memcached::NotStored)
-        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.replace "key", "value" }.to raise_error(Memcached::NotStored)
+        expect { @memcached.get "key" }.to raise_error(Memcached::NotFound)
       end
     end
 
@@ -121,12 +121,12 @@ describe Memcached do
       it "should delete with existing key" do
         @memcached.set "key", "value"
         @memcached.delete "key"
-        lambda { @memcached.get "key" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.get "key" }.to raise_error(Memcached::NotFound)
       end
 
       it "should not delete with new key" do
         @memcached.delete "key" rescue nil
-        lambda { @memcached.delete "key" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.delete "key" }.to raise_error(Memcached::NotFound)
       end
     end
 
@@ -180,8 +180,8 @@ describe Memcached do
         @memcached.set "key1", "value2"
         @memcached.set "key2", "value2"
         @memcached.flush
-        lambda { @memcached.get "key1" }.should raise_error(Memcached::NotFound)
-        lambda { @memcached.get "key2" }.should raise_error(Memcached::NotFound)
+        expect { @memcached.get "key1" }.to raise_error(Memcached::NotFound)
+        expect { @memcached.get "key2" }.to raise_error(Memcached::NotFound)
       end
     end
 
@@ -213,7 +213,7 @@ describe Memcached do
         it "should delete with prefix_key" do
           @prefix_memcached.set "key", "value"
           @prefix_memcached.delete "key"
-          lambda { @memcached.get("jrubykey") }.should raise_error(Memcached::NotFound)
+          expect { @memcached.get("jrubykey") }.to raise_error(Memcached::NotFound)
         end
 
         it "should multiget with prefix_key" do
